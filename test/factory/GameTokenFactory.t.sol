@@ -68,7 +68,7 @@ contract GameTokenFactoryTest is Test {
 
     function test_create2_deterministicAddress() public {
         bytes32 salt = bytes32("mysalt");
-        address predicted = factory.predictAddress("Gold", "GLD", salt, address(factory));
+        address predicted = factory.predictAddress("Gold", "GLD", salt);
         address actual    = factory.createToken2("Gold", "GLD", salt);
         assertEq(actual, predicted);
     }

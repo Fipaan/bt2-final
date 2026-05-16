@@ -33,16 +33,15 @@ contract GameTokenFactory {
     function predictAddress(
         string memory name,
         string memory symbol,
-        bytes32 salt,
-        address deployer
-    ) external pure returns (address) {
+        bytes32 salt
+    ) external view returns (address) {
         bytes memory creationCode = abi.encodePacked(
             type(GameToken).creationCode,
-            abi.encode(name, symbol, deployer)
+            abi.encode(name, symbol, msg.sender)
         );
         return address(uint160(uint256(keccak256(abi.encodePacked(
             bytes1(0xff),
-            deployer,
+            address(this),
             salt,
             keccak256(creationCode)
         )))));
