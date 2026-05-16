@@ -147,7 +147,6 @@ contract Equestria1155 is IERC1155, ReentrancyGuard {
         if (balanceOf(user, LOYALTY)    < r.loyalty)    revert NotEnoughLoyalty();
         if (balanceOf(user, MAGIC)      < r.magic)      revert NotEnoughMagic();
 
-        bytes memory data = new bytes(0);
         _burn(user, HONESTY,    r.honesty);
         _burn(user, KINDNESS,   r.kindness);
         _burn(user, LAUGHTER,   r.laughter);
