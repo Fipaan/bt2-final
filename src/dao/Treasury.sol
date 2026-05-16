@@ -7,10 +7,15 @@ contract Treasury {
     using SafeERC20 for IERC20;
     address public immutable timelock;
 
-    modifier onlyTimelock() {
-        require(msg.sender == timelock, "Not timelock");
-        _;
-    }
+     modifier onlyTimelock() {
+         _onlyTimelock();
+         _;
+     }
+
+     function _onlyTimelock() internal view {
+         require(msg.sender == timelock, "Not timelock");
+     }
+
 
     constructor(address _timelock) {
         require(_timelock != address(0));
@@ -27,6 +32,10 @@ contract Treasury {
         onlyTimelock
     {
         require(to != address(0));
+        // SLITHER-NOTE:
+        //     it's custom implementation of withdrawETH,
+        //     so it expected to perform low-level call
+        // slither-disable-next-line low-level-calls
         (bool success, ) = to.call{value: amount}("");
         require(success, "ETH transfer failed");
     }

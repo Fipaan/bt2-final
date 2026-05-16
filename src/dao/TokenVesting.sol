@@ -24,6 +24,10 @@ contract TokenVesting {
     function vestedAmount() public view returns (uint256) {
         uint256 total = token.balanceOf(address(this)) + released;
 
+        // SLITHER-NOTE:
+        //     it clamps block's timestamp between expected range,
+        //     it can't avoid compare timestamps
+        // slither-disable-next-line timestamp
         if (block.timestamp < start) return 0;
         if (block.timestamp >= start + DURATION) return total;
 
@@ -33,6 +37,10 @@ contract TokenVesting {
     function release() external {
         uint256 vested = vestedAmount();
         uint256 amount = vested - released;
+        // SLITHER-NOTE:
+        //     basically, it compares timestamps, and that's how DAO works,
+        //     it can't be done in other way, it needs to compare them.
+        // slither-disable-next-line timestamp
         require(amount > 0, "Nothing to release");
 
         released = vested;
