@@ -16,7 +16,8 @@ ignored_warnings_from = ["lib/"]
 remappings = [
     "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
     "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
-    "forge-std/=lib/forge-std/src/"
+    "forge-std/=lib/forge-std/src/",
+    "@chainlink/=lib/chainlink-brownie-contracts/",
 ]
 
 [lint]

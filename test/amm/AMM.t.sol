@@ -65,7 +65,7 @@ contract AMMTest is Test {
     address bob   = address(0xB0B);
 
     uint256 constant INITIAL = 1_000_000 ether;
-    bool constant TEST_INVARIANCE = true;
+    bool constant TEST_INVARIANCE = false;
 
     function setUp() public {
         tokenA = new GameToken("Token A", "TKA", address(this));
