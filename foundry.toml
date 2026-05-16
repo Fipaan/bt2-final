@@ -25,6 +25,7 @@ exclude_lints = [
     "screaming-snake-case-immutable",
     "mixed-case-variable",
     "mixed-case-function",
+    "screaming-snake-case-const",
 ]
 
 [rpc_endpoints]

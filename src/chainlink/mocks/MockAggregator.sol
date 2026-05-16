@@ -23,13 +23,21 @@ contract MockAggregator is AggregatorV3Interface {
     }
 
     function latestRoundData() external view override returns (
-        uint80, int256, uint256, uint256, uint80
+        uint80  roundId,
+        int256  answer,
+        uint256 startedAt,
+        uint256 updatedAt_,
+        uint80  answeredInRound
     ) {
         return (1, price, block.timestamp, updatedAt, 1);
     }
 
     function getRoundData(uint80) external view override returns (
-        uint80, int256, uint256, uint256, uint80
+        uint80  roundId,
+        int256  answer,
+        uint256 startedAt,
+        uint256 updatedAt_,
+        uint80  answeredInRound
     ) {
         return (1, price, block.timestamp, updatedAt, 1);
     }

@@ -3,11 +3,8 @@ pragma solidity ^0.8.25;
 
 import {VRFConsumerBaseV2Plus}      from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
 import {VRFV2PlusClient}            from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
-import {IVRFCoordinatorV2Plus}      from "@chainlink/contracts/src/v0.8/vrf/dev/interfaces/IVRFCoordinatorV2Plus.sol";
 
 contract VRFConsumer is VRFConsumerBaseV2Plus {
-    IVRFCoordinatorV2Plus public immutable coordinator;
-
     bytes32 public immutable keyHash;
     uint256 public immutable subscriptionId;
     uint16  public constant  REQUEST_CONFIRMATIONS = 3;
@@ -25,20 +22,26 @@ contract VRFConsumer is VRFConsumerBaseV2Plus {
         bytes32 keyHash_,
         uint256 subscriptionId_
     ) VRFConsumerBaseV2Plus(coordinator_) {
-        coordinator    = IVRFCoordinatorV2Plus(coordinator_);
         keyHash        = keyHash_;
         subscriptionId = subscriptionId_;
     }
 
     function requestRandom() external returns (uint256 requestId) {
-        requestId = coordinator.requestRandomWords(
+        requestToSender[requestId] = msg.sender;
+        // SLITHER-NOTE:
+        //     it's false positive by Slither, because it's incorrect behavior
+        //     to emit event before requestRandomWords. Slither complains only
+        //     because it's external call. Also it kind of modifies data, "after"
+        //     external call, that considered as possible reentrancy
+        // slither-disable-next-line reentrancy-events,reentrancy-benign
+        requestId = s_vrfCoordinator.requestRandomWords(
             VRFV2PlusClient.RandomWordsRequest({
-                keyHash:             keyHash,
-                subId:               subscriptionId,
+                keyHash:              keyHash,
+                subId:                subscriptionId,
                 requestConfirmations: REQUEST_CONFIRMATIONS,
-                callbackGasLimit:    CALLBACK_GAS_LIMIT,
-                numWords:            NUM_WORDS,
-                extraArgs:           VRFV2PlusClient._argsToBytes(
+                callbackGasLimit:     CALLBACK_GAS_LIMIT,
+                numWords:             NUM_WORDS,
+                extraArgs:            VRFV2PlusClient._argsToBytes(
                     VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
                 )
             })

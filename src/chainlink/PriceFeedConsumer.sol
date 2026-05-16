@@ -9,6 +9,7 @@ contract PriceFeedConsumer {
 
     error StalePrice();
     error InvalidPrice();
+    error InvalidRound();
 
     constructor(address feed_, uint256 stalenessThreshold_) {
         priceFeed = AggregatorV3Interface(feed_);
@@ -16,8 +17,23 @@ contract PriceFeedConsumer {
     }
 
     function getLatestPrice() external view returns (int256 price, uint256 updatedAt) {
-        (, price,, updatedAt,) = priceFeed.latestRoundData();
-        if (block.timestamp - updatedAt > stalenessThreshold) revert StalePrice();
-        if (price <= 0) revert InvalidPrice();
+        (
+            uint80  roundId,
+            int256  price_,
+            uint256 startedAt,
+            uint256 updatedAt_,
+            uint80  answeredInRound
+        ) = priceFeed.latestRoundData();
+        if (startedAt == 0)            revert InvalidRound();
+        if (answeredInRound < roundId) revert InvalidRound();
+        // SLITHER-NOTE:
+        //     basically, it compares timestamps, and that's how
+        //     getLatestPrice should work, it can't be done in
+        //     other way, it needs to compare them.
+        // slither-disable-next-line timestamp
+        if (block.timestamp - updatedAt_ > stalenessThreshold) revert StalePrice();
+        if (price_ <= 0)               revert InvalidPrice();
+        price     = price_;
+        updatedAt = updatedAt_;
     }
 }
