@@ -1,0 +1,150 @@
+type Pool @entity {
+  id: ID!
+  address: Bytes!
+  reserveA: BigInt!
+  reserveB: BigInt!
+  liquidityEventCount: BigInt!
+  swapCount: BigInt!
+  updatedAt: BigInt!
+  updatedAtBlock: BigInt!
+}
+
+type LiquidityEvent @entity(immutable: true) {
+  id: ID!
+  pool: Pool!
+  provider: Bytes!
+  action: String!
+  amountA: BigInt!
+  amountB: BigInt!
+  lpTokenAmount: BigInt!
+  transactionHash: Bytes!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+}
+
+type SwapEvent @entity(immutable: true) {
+  id: ID!
+  pool: Pool!
+  trader: Bytes!
+  tokenIn: Bytes!
+  tokenOut: Bytes!
+  amountIn: BigInt!
+  amountOut: BigInt!
+  transactionHash: Bytes!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+}
+
+type TokenBalance @entity {
+  id: ID!
+  owner: Bytes!
+  tokenId: BigInt!
+  balance: BigInt!
+  updatedAt: BigInt!
+  updatedAtBlock: BigInt!
+}
+
+type NftTransfer @entity(immutable: true) {
+  id: ID!
+  operator: Bytes!
+  from: Bytes!
+  to: Bytes!
+  tokenId: BigInt!
+  value: BigInt!
+  transactionHash: Bytes!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+}
+
+type CraftRequest @entity {
+  id: ID!
+  requestId: BigInt!
+  user: Bytes!
+  ponyId: BigInt!
+  fulfilled: Boolean!
+  fulfillment: CraftFulfillment
+  transactionHash: Bytes!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+}
+
+type CraftFulfillment @entity(immutable: true) {
+  id: ID!
+  request: CraftRequest!
+  requestId: BigInt!
+  user: Bytes!
+  ponyId: BigInt!
+  transactionHash: Bytes!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+}
+
+type OperatorApproval @entity {
+  id: ID!
+  owner: Bytes!
+  operator: Bytes!
+  approved: Boolean!
+  updatedAt: BigInt!
+  updatedAtBlock: BigInt!
+}
+
+type Rental @entity {
+  id: ID!
+  renter: Bytes!
+  nftId: BigInt!
+  active: Boolean!
+  stakedAt: BigInt!
+  unstakedAt: BigInt
+  stakedTx: Bytes!
+  unstakedTx: Bytes
+}
+
+type VaultStat @entity {
+  id: ID!
+  activeRentalCount: BigInt!
+  totalYieldInjected: BigInt!
+  currentBoostBps: BigInt!
+  boostUpdateCount: BigInt!
+  updatedAt: BigInt!
+  updatedAtBlock: BigInt!
+}
+
+type YieldInjection @entity(immutable: true) {
+  id: ID!
+  amount: BigInt!
+  transactionHash: Bytes!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+}
+
+type BoostUpdate @entity(immutable: true) {
+  id: ID!
+  newBoostBps: BigInt!
+  transactionHash: Bytes!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+}
+
+type CreatedToken @entity(immutable: true) {
+  id: ID!
+  token: Bytes!
+  salt: Bytes!
+  create2: Boolean!
+  transactionHash: Bytes!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+}
+
+type RandomRequest @entity {
+  id: ID!
+  requestId: BigInt!
+  sender: Bytes!
+  fulfilled: Boolean!
+  randomWord: BigInt
+  requestedTx: Bytes!
+  fulfilledTx: Bytes
+  requestedAt: BigInt!
+  fulfilledAt: BigInt
+  requestedAtBlock: BigInt!
+  fulfilledAtBlock: BigInt
+}

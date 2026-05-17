@@ -1,0 +1,135 @@
+specVersion: 0.0.8
+schema:
+  file: ./schema.graphql
+features:
+  - nonFatalErrors
+dataSources:
+  - kind: ethereum/contract
+    name: AMM
+    network: arbitrum-sepolia
+    source:
+      address: "0x0000000000000000000000000000000000000000"
+      abi: AMM
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Pool
+        - LiquidityEvent
+        - SwapEvent
+      abis:
+        - name: AMM
+          file: ./abis/AMM.json
+      eventHandlers:
+        - event: LiquidityAdded(indexed address,indexed uint256,indexed uint256,uint256)
+          handler: handleLiquidityAdded
+        - event: LiquidityRemoved(indexed address,indexed uint256,indexed uint256,uint256)
+          handler: handleLiquidityRemoved
+        - event: Swap(indexed address,indexed address,indexed address,uint256,uint256)
+          handler: handleSwap
+      file: ./src/amm.ts
+  - kind: ethereum/contract
+    name: Equestria1155
+    network: arbitrum-sepolia
+    source:
+      address: "0x0000000000000000000000000000000000000000"
+      abi: Equestria1155
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - TokenBalance
+        - NftTransfer
+        - CraftRequest
+        - CraftFulfillment
+        - OperatorApproval
+      abis:
+        - name: Equestria1155
+          file: ./abis/Equestria1155.json
+      eventHandlers:
+        - event: TransferSingle(indexed address,indexed address,indexed address,uint256,uint256)
+          handler: handleTransferSingle
+        - event: TransferBatch(indexed address,indexed address,indexed address,uint256[],uint256[])
+          handler: handleTransferBatch
+        - event: ApprovalForAll(indexed address,indexed address,bool)
+          handler: handleApprovalForAll
+        - event: CraftRequested(indexed uint256,indexed address,indexed uint256)
+          handler: handleCraftRequested
+        - event: CraftFulfilled(indexed uint256,indexed address,indexed uint256)
+          handler: handleCraftFulfilled
+      file: ./src/equestria1155.ts
+  - kind: ethereum/contract
+    name: NFTRentalVault
+    network: arbitrum-sepolia
+    source:
+      address: "0x0000000000000000000000000000000000000000"
+      abi: NFTRentalVault
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Rental
+        - VaultStat
+        - YieldInjection
+        - BoostUpdate
+      abis:
+        - name: NFTRentalVault
+          file: ./abis/NFTRentalVault.json
+      eventHandlers:
+        - event: NFTStaked(indexed address,indexed uint256)
+          handler: handleNFTStaked
+        - event: NFTUnstaked(indexed address,indexed uint256)
+          handler: handleNFTUnstaked
+        - event: YieldInjected(indexed uint256)
+          handler: handleYieldInjected
+        - event: BoostUpdated(indexed uint256)
+          handler: handleBoostUpdated
+      file: ./src/vault.ts
+  - kind: ethereum/contract
+    name: GameTokenFactory
+    network: arbitrum-sepolia
+    source:
+      address: "0x0000000000000000000000000000000000000000"
+      abi: GameTokenFactory
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - CreatedToken
+      abis:
+        - name: GameTokenFactory
+          file: ./abis/GameTokenFactory.json
+      eventHandlers:
+        - event: TokenCreated(indexed address,indexed bytes32,indexed bool)
+          handler: handleTokenCreated
+      file: ./src/factory.ts
+  - kind: ethereum/contract
+    name: VRFConsumer
+    network: arbitrum-sepolia
+    source:
+      address: "0x0000000000000000000000000000000000000000"
+      abi: VRFConsumer
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - RandomRequest
+      abis:
+        - name: VRFConsumer
+          file: ./abis/VRFConsumer.json
+      eventHandlers:
+        - event: RandomRequested(indexed uint256,indexed address)
+          handler: handleRandomRequested
+        - event: RandomFulfilled(indexed uint256,indexed uint256)
+          handler: handleRandomFulfilled
+      file: ./src/vrf.ts

@@ -1,0 +1,82 @@
+# 1. Recent swaps: shows trader, token route, amounts, and the pool state.
+query RecentSwaps {
+  swapEvents(first: 20, orderBy: timestamp, orderDirection: desc) {
+    id
+    trader
+    tokenIn
+    tokenOut
+    amountIn
+    amountOut
+    timestamp
+    pool {
+      id
+      reserveA
+      reserveB
+      swapCount
+    }
+  }
+}
+
+# 2. Liquidity history: audit add/remove actions by provider.
+query LiquidityHistory($provider: Bytes!) {
+  liquidityEvents(
+    first: 50
+    orderBy: timestamp
+    orderDirection: desc
+    where: { provider: $provider }
+  ) {
+    id
+    action
+    amountA
+    amountB
+    lpTokenAmount
+    transactionHash
+    timestamp
+  }
+}
+
+# 3. ERC-1155 portfolio: balances for resources and crafted ponies.
+query HolderBalances($owner: Bytes!) {
+  tokenBalances(first: 100, orderBy: tokenId, orderDirection: asc, where: { owner: $owner, balance_gt: 0 }) {
+    tokenId
+    balance
+    updatedAt
+  }
+}
+
+# 4. Crafting lifecycle: requested ponies and fulfillment status.
+query CraftingLifecycle($user: Bytes!) {
+  craftRequests(first: 50, orderBy: timestamp, orderDirection: desc, where: { user: $user }) {
+    requestId
+    ponyId
+    fulfilled
+    timestamp
+    fulfillment {
+      transactionHash
+      timestamp
+    }
+  }
+}
+
+# 5. Vault activity: active rentals, boost settings, and yield injections.
+query VaultActivity {
+  vaultStats(first: 1) {
+    activeRentalCount
+    totalYieldInjected
+    currentBoostBps
+    boostUpdateCount
+    updatedAt
+  }
+  rentals(first: 20, orderBy: stakedAt, orderDirection: desc) {
+    renter
+    nftId
+    active
+    stakedAt
+    unstakedAt
+  }
+  yieldInjections(first: 10, orderBy: timestamp, orderDirection: desc) {
+    amount
+    transactionHash
+    timestamp
+  }
+}

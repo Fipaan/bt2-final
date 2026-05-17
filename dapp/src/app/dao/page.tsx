@@ -1,47 +1,17 @@
 "use client";
-import { useState }  from "react";
-import {
-  useAccount, useReadContracts, useWriteContract,
-  useWaitForTransactionReceipt, useBlockNumber,
-} from "wagmi";
-import { keccak256, toHex, encodeAbiParameters, parseAbiParameters } from "viem";
-import { ADDRESSES, GOVERNOR_ABI, GOVERNANCE_TOKEN_ABI } from "@/lib/contracts";
-import { formatAmount, PROPOSAL_STATES, SUPPORT_LABELS } from "@/lib/utils";
-import { ConnectGuard, TxButton, Section, StatCard, Badge, InputField, EmptyState } from "@/components/ui";
 
-// Dummy proposals until subgraph is connected
-const DUMMY_PROPOSALS = [
-  {
-    id: "1",
-    proposalId: BigInt("94878930239867942609067908413437140521264737858498588285512869797386428660736"),
-    description: "Set drop rate for Pinkie Pie to 15% per VRF request",
-    state: 1, // Active
-    forVotes: 420000n * 10n**18n,
-    againstVotes: 50000n * 10n**18n,
-    abstainVotes: 10000n * 10n**18n,
-    voteEnd: 100n,
-  },
-  {
-    id: "2",
-    proposalId: BigInt("2"),
-    description: "Increase vault boost BPS from 1200 to 1500",
-    state: 4, // Succeeded
-    forVotes: 700000n * 10n**18n,
-    againstVotes: 20000n * 10n**18n,
-    abstainVotes: 5000n * 10n**18n,
-    voteEnd: 50n,
-  },
-  {
-    id: "3",
-    proposalId: BigInt("3"),
-    description: "Deploy new GameToken via Factory with symbol MANA",
-    state: 7, // Executed
-    forVotes: 600000n * 10n**18n,
-    againstVotes: 100000n * 10n**18n,
-    abstainVotes: 0n,
-    voteEnd: 10n,
-  },
-];
+import { useEffect, useMemo, useState } from "react";
+import {
+  useAccount,
+  useReadContracts,
+  useWaitForTransactionReceipt,
+  useWriteContract,
+} from "wagmi";
+import { ADDRESSES, GOVERNANCE_TOKEN_ABI, GOVERNOR_ABI, missingAddressLabels } from "@/lib/contracts";
+import { friendlyError, missingEnvMessage } from "@/lib/errors";
+import { fetchIndexedProposals, type IndexedProposal } from "@/lib/subgraph";
+import { formatAmount, PROPOSAL_STATES, shortenAddress, SUPPORT_LABELS } from "@/lib/utils";
+import { Badge, ConnectGuard, EmptyState, Notice, Section, StatCard, TxButton } from "@/components/ui";
 
 function stateColor(state: number): "green" | "orange" | "red" | "accent" | "purple" | "default" {
   if (state === 1) return "green";
@@ -54,104 +24,120 @@ function stateColor(state: number): "green" | "orange" | "red" | "accent" | "pur
 
 export default function DAOPage() {
   const { address } = useAccount();
-  const [activeProposal, setActiveProposal] = useState<bigint | null>(null);
-  const [support, setSupport]               = useState<0 | 1 | 2>(1);
-  const [showPropose, setShowPropose]       = useState(false);
-  const [propDesc, setPropDesc]             = useState("");
-  const [txHash, setTxHash]                 = useState<`0x${string}` | undefined>();
+  const [proposals, setProposals] = useState<IndexedProposal[]>([]);
+  const [proposalError, setProposalError] = useState("");
+  const [activeProposalId, setActiveProposalId] = useState<string | null>(null);
+  const [support, setSupport] = useState<0 | 1 | 2>(1);
+  const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
+  const [txError, setTxError] = useState("");
 
   const { writeContractAsync, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash: txHash });
+  const missing = missingAddressLabels(["governanceToken", "myGovernor"]);
 
-  const { data } = useReadContracts({
-    contracts: address ? [
-      { address: ADDRESSES.governanceToken, abi: GOVERNANCE_TOKEN_ABI, functionName: "balanceOf",  args: [address] },
-      { address: ADDRESSES.governanceToken, abi: GOVERNANCE_TOKEN_ABI, functionName: "getVotes",   args: [address] },
-      { address: ADDRESSES.governanceToken, abi: GOVERNANCE_TOKEN_ABI, functionName: "delegates",  args: [address] },
-      { address: ADDRESSES.myGovernor,      abi: GOVERNOR_ABI,          functionName: "votingDelay"  },
-      { address: ADDRESSES.myGovernor,      abi: GOVERNOR_ABI,          functionName: "votingPeriod" },
+  useEffect(() => {
+    let cancelled = false;
+    fetchIndexedProposals()
+      .then((next) => {
+        if (!cancelled) {
+          setProposals(next);
+          setProposalError("");
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) setProposalError(friendlyError(error));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const proposalReads = useMemo(() => {
+    if (!address || missing.length > 0) return [];
+    return proposals.flatMap((proposal) => {
+      const proposalId = BigInt(proposal.proposalId);
+      return [
+        { address: ADDRESSES.myGovernor, abi: GOVERNOR_ABI, functionName: "state", args: [proposalId] },
+        { address: ADDRESSES.myGovernor, abi: GOVERNOR_ABI, functionName: "proposalVotes", args: [proposalId] },
+        { address: ADDRESSES.myGovernor, abi: GOVERNOR_ABI, functionName: "hasVoted", args: [proposalId, address] },
+      ];
+    });
+  }, [address, missing.length, proposals]);
+
+  const { data, refetch } = useReadContracts({
+    contracts: address && missing.length === 0 ? [
+      { address: ADDRESSES.governanceToken, abi: GOVERNANCE_TOKEN_ABI, functionName: "balanceOf", args: [address] },
+      { address: ADDRESSES.governanceToken, abi: GOVERNANCE_TOKEN_ABI, functionName: "getVotes", args: [address] },
+      { address: ADDRESSES.governanceToken, abi: GOVERNANCE_TOKEN_ABI, functionName: "delegates", args: [address] },
+      { address: ADDRESSES.myGovernor, abi: GOVERNOR_ABI, functionName: "votingDelay" },
+      { address: ADDRESSES.myGovernor, abi: GOVERNOR_ABI, functionName: "votingPeriod" },
+      ...proposalReads,
     ] : [],
   });
 
-  const [govBal, govVotes, delegate, votingDelay, votingPeriod] = (data ?? []).map(d => d?.result);
-  const isSelfDelegated = delegate === address;
+  useEffect(() => {
+    if (isSuccess) refetch();
+  }, [isSuccess, refetch]);
+
+  const [govBal, govVotes, delegate, votingDelay, votingPeriod] = (data ?? []).slice(0, 5).map((d) => d?.result);
+  const liveProposalData = (data ?? []).slice(5);
+  const isSelfDelegated = !!address && typeof delegate === "string" && delegate.toLowerCase() === address.toLowerCase();
+  const loading = isPending || isConfirming;
 
   async function handleDelegate() {
     if (!address) return;
+    setTxError("");
     try {
       const tx = await writeContractAsync({
-        address:      ADDRESSES.governanceToken,
-        abi:          GOVERNANCE_TOKEN_ABI,
+        address: ADDRESSES.governanceToken,
+        abi: GOVERNANCE_TOKEN_ABI,
         functionName: "delegate",
-        args:         [address],
+        args: [address],
       });
       setTxHash(tx);
-    } catch {}
+    } catch (error) {
+      setTxError(friendlyError(error));
+    }
   }
 
-  async function handleVote() {
-    if (!address || activeProposal === null) return;
+  async function handleVote(proposalId: string) {
+    if (!address) return;
+    setTxError("");
     try {
       const tx = await writeContractAsync({
-        address:      ADDRESSES.myGovernor,
-        abi:          GOVERNOR_ABI,
+        address: ADDRESSES.myGovernor,
+        abi: GOVERNOR_ABI,
         functionName: "castVote",
-        args:         [activeProposal, support],
+        args: [BigInt(proposalId), support],
       });
       setTxHash(tx);
-    } catch {}
+    } catch (error) {
+      setTxError(friendlyError(error));
+    }
   }
-
-  async function handlePropose() {
-    if (!address || !propDesc) return;
-    try {
-      // Dummy no-op proposal targeting Box contract
-      const tx = await writeContractAsync({
-        address:      ADDRESSES.myGovernor,
-        abi:          GOVERNOR_ABI,
-        functionName: "propose",
-        args: [
-          [ADDRESSES.myGovernor],
-          [0n],
-          ["0x" as `0x${string}`],
-          propDesc,
-        ],
-      });
-      setTxHash(tx);
-      setShowPropose(false);
-      setPropDesc("");
-    } catch {}
-  }
-
-  const loading = isPending || isConfirming;
 
   return (
     <ConnectGuard>
       <main className="max-w-4xl mx-auto px-4 py-8 flex flex-col gap-6 animate-fade-in">
-        <Section
-          title="DAO Governance"
-          sub="Vote on protocol parameters · drop rates · crafting costs"
-          action={
-            <TxButton onClick={() => setShowPropose(s => !s)} variant="ghost">
-              {showPropose ? "Cancel" : "+ New Proposal"}
-            </TxButton>
-          }
-        >
-          {/* Voting power */}
+        <Section title="DAO Governance" sub="Indexed proposals · live Governor state · wallet voting">
+          {missing.length > 0 && <Notice tone="warning" message={missingEnvMessage(missing)} />}
+          {proposalError && <Notice tone="warning" message={proposalError} />}
+          {txError && <Notice tone="error" message={txError} />}
+          {txHash && isSuccess && <Notice tone="success" message="Transaction confirmed." />}
+
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <StatCard label="GOV Balance"    value={govBal !== undefined ? formatAmount(govBal as bigint) : "—"} />
-            <StatCard label="Voting Power"   value={govVotes !== undefined ? formatAmount(govVotes as bigint) : "—"} accent />
-            <StatCard label="Voting Delay"   value={votingDelay !== undefined ? `${votingDelay} blocks` : "—"} />
-            <StatCard label="Voting Period"  value={votingPeriod !== undefined ? `${votingPeriod} blocks` : "—"} />
+            <StatCard label="GOV Balance" value={govBal !== undefined ? formatAmount(govBal as bigint) : "-"} />
+            <StatCard label="Voting Power" value={govVotes !== undefined ? formatAmount(govVotes as bigint) : "-"} accent />
+            <StatCard label="Voting Delay" value={votingDelay !== undefined ? `${votingDelay} blocks` : "-"} />
+            <StatCard label="Voting Period" value={votingPeriod !== undefined ? `${votingPeriod} blocks` : "-"} />
           </div>
 
-          {/* Delegate prompt */}
           {!isSelfDelegated && (
             <div className="card border-orange/40 bg-orange/5 flex items-center justify-between gap-4">
               <div>
                 <p className="text-orange font-display font-semibold text-sm">Delegate your votes</p>
                 <p className="text-subtext text-xs font-mono mt-0.5">
-                  You must delegate to yourself (or another address) to vote
+                  Current delegate: {delegate ? shortenAddress(delegate as string) : "none"}
                 </p>
               </div>
               <TxButton onClick={handleDelegate} loading={loading}>
@@ -160,94 +146,94 @@ export default function DAOPage() {
             </div>
           )}
 
-          {/* New proposal form */}
-          {showPropose && (
-            <div className="card border-accent/30 flex flex-col gap-4">
-              <h3 className="font-display font-semibold text-white text-sm">New Proposal</h3>
-              <InputField
-                label="Description"
-                value={propDesc}
-                onChange={setPropDesc}
-                placeholder="Describe what this proposal does…"
-              />
-              <p className="text-subtext text-xs font-mono">
-                Note: targets/calldatas are placeholders until contracts are deployed.
-              </p>
-              <TxButton onClick={handlePropose} loading={loading} disabled={!propDesc}>
-                Submit Proposal
-              </TxButton>
-              {txHash && isSuccess && (
-                <p className="text-green text-xs font-mono">✓ Proposal submitted!</p>
-              )}
-            </div>
-          )}
-
-          {/* Proposals list */}
           <div className="flex flex-col gap-3">
-            {DUMMY_PROPOSALS.map(prop => {
-              const total = prop.forVotes + prop.againstVotes + prop.abstainVotes;
-              const forPct = total > 0n ? Number((prop.forVotes * 100n) / total) : 0;
+            {proposals.length === 0 && !proposalError && (
+              <EmptyState message="No proposals indexed yet." />
+            )}
+            {proposals.map((proposal, index) => {
+              const base = index * 3;
+              const rawState = liveProposalData[base]?.result as bigint | number | undefined;
+              const liveState = rawState !== undefined ? Number(rawState) : undefined;
+              const liveVotes = liveProposalData[base + 1]?.result as readonly [bigint, bigint, bigint] | undefined;
+              const hasVoted = (liveProposalData[base + 2]?.result as boolean | undefined) ?? false;
+              const state = liveState ?? (proposal.executed ? 7 : proposal.canceled ? 2 : proposal.queued ? 5 : 0);
+              const againstVotes = liveVotes?.[0] ?? BigInt(proposal.againstVotes);
+              const forVotes = liveVotes?.[1] ?? BigInt(proposal.forVotes);
+              const abstainVotes = liveVotes?.[2] ?? BigInt(proposal.abstainVotes);
+              const total = forVotes + againstVotes + abstainVotes;
+              const forPct = total > 0n ? Number((forVotes * 100n) / total) : 0;
+              const isActive = state === 1;
+              const isOpen = activeProposalId === proposal.proposalId;
+
               return (
-                <div key={prop.id}
+                <div
+                  key={proposal.id}
                   className={`card cursor-pointer transition-all hover:border-accent/40 ${
-                    activeProposal === prop.proposalId ? "border-accent/60 bg-accent/5" : ""
+                    isOpen ? "border-accent/60 bg-accent/5" : ""
                   }`}
-                  onClick={() => setActiveProposal(
-                    activeProposal === prop.proposalId ? null : prop.proposalId
-                  )}
+                  onClick={() => setActiveProposalId(isOpen ? null : proposal.proposalId)}
                 >
-                  {/* Header */}
                   <div className="flex items-start justify-between gap-3 mb-3">
-                    <p className="font-body text-sm text-white leading-snug">{prop.description}</p>
-                    <Badge color={stateColor(prop.state)}>
-                      {PROPOSAL_STATES[prop.state]?.label ?? "Unknown"}
+                    <div>
+                      <p className="font-body text-sm text-white leading-snug">{proposal.description}</p>
+                      <p className="text-subtext text-xs font-mono mt-1">
+                        By {shortenAddress(proposal.proposer)}
+                      </p>
+                    </div>
+                    <Badge color={stateColor(state)}>
+                      {PROPOSAL_STATES[state]?.label ?? "Unknown"}
                     </Badge>
                   </div>
 
-                  {/* Vote bar */}
                   <div className="flex flex-col gap-1.5">
                     <div className="flex items-center justify-between text-xs font-mono text-subtext">
                       <span className="text-green">For {forPct.toFixed(1)}%</span>
                       <span className="text-red">Against {total > 0n ? (100 - forPct).toFixed(1) : 0}%</span>
                     </div>
                     <div className="h-1.5 bg-surface2 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-green rounded-full transition-all"
-                        style={{ width: `${forPct}%` }}
-                      />
+                      <div className="h-full bg-green rounded-full transition-all" style={{ width: `${forPct}%` }} />
                     </div>
                     <div className="flex gap-4 text-xs font-mono text-subtext">
-                      <span>{formatAmount(prop.forVotes)} For</span>
-                      <span>{formatAmount(prop.againstVotes)} Against</span>
-                      <span>{formatAmount(prop.abstainVotes)} Abstain</span>
+                      <span>{formatAmount(forVotes)} For</span>
+                      <span>{formatAmount(againstVotes)} Against</span>
+                      <span>{formatAmount(abstainVotes)} Abstain</span>
                     </div>
                   </div>
 
-                  {/* Vote controls (only for active proposals) */}
-                  {activeProposal === prop.proposalId && prop.state === 1 && (
-                    <div className="mt-4 pt-4 border-t border-border flex flex-col gap-3" onClick={e => e.stopPropagation()}>
+                  {isOpen && (
+                    <div className="mt-4 pt-4 border-t border-border flex flex-col gap-3" onClick={(event) => event.stopPropagation()}>
                       <div className="flex gap-2">
-                        {([1, 0, 2] as const).map(s => (
-                          <button key={s} onClick={() => setSupport(s)}
+                        {([1, 0, 2] as const).map((nextSupport) => (
+                          <button
+                            key={nextSupport}
+                            onClick={() => setSupport(nextSupport)}
                             className={`flex-1 text-xs font-mono py-2 rounded-lg border transition-colors ${
-                              support === s
-                                ? s === 1 ? "border-green/40 bg-green/10 text-green"
-                                  : s === 0 ? "border-red/40 bg-red/10 text-red"
-                                  : "border-subtext/40 bg-surface2 text-subtext"
+                              support === nextSupport
+                                ? nextSupport === 1
+                                  ? "border-green/40 bg-green/10 text-green"
+                                  : nextSupport === 0
+                                    ? "border-red/40 bg-red/10 text-red"
+                                    : "border-subtext/40 bg-surface2 text-subtext"
                                 : "border-border text-subtext hover:text-text"
                             }`}
                           >
-                            {SUPPORT_LABELS[s]}
+                            {SUPPORT_LABELS[nextSupport]}
                           </button>
                         ))}
                       </div>
-                      {isSuccess && txHash ? (
-                        <p className="text-green text-xs font-mono text-center">✓ Vote cast!</p>
-                      ) : (
-                        <TxButton onClick={handleVote} loading={loading} disabled={!isSelfDelegated}>
-                          {isSelfDelegated ? `Vote ${SUPPORT_LABELS[support]}` : "Delegate first to vote"}
-                        </TxButton>
-                      )}
+                      <TxButton
+                        onClick={() => handleVote(proposal.proposalId)}
+                        loading={loading}
+                        disabled={!isActive || !isSelfDelegated || hasVoted}
+                      >
+                        {hasVoted
+                          ? "Already voted"
+                          : !isActive
+                            ? "Voting closed"
+                            : isSelfDelegated
+                              ? `Vote ${SUPPORT_LABELS[support]}`
+                              : "Delegate first to vote"}
+                      </TxButton>
                       {txHash && (
                         <p className="text-xs font-mono text-subtext break-all">
                           Tx: <span className="text-accent">{txHash}</span>

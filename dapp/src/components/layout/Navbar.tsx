@@ -11,6 +11,7 @@ const NAV = [
   { href: "/amm",       label: "AMM"       },
   { href: "/vault",     label: "Vault"     },
   { href: "/dao",       label: "DAO"       },
+  { href: "/vesting", label: "Vesting" },
 ];
 
 export function Navbar() {

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   useAccount, useReadContracts, useWriteContract,
   useWaitForTransactionReceipt,
@@ -7,10 +7,11 @@ import {
 import { maxUint256 }   from "viem";
 import {
   ADDRESSES, NFT_RENTAL_VAULT_ABI, GOVERNANCE_TOKEN_ABI,
-  EQUESTRIA_1155_ABI, TOKEN_IDS,
+  EQUESTRIA_1155_ABI, TOKEN_IDS, missingAddressLabels,
 } from "@/lib/contracts";
+import { friendlyError, missingEnvMessage } from "@/lib/errors";
 import { formatAmount, parseAmount } from "@/lib/utils";
-import { ConnectGuard, TxButton, Section, StatCard, InputField, Badge } from "@/components/ui";
+import { ConnectGuard, TxButton, Section, StatCard, InputField, Badge, Notice } from "@/components/ui";
 
 type Mode = "deposit" | "withdraw" | "stake";
 
@@ -19,12 +20,14 @@ export default function VaultPage() {
   const [mode, setMode]         = useState<Mode>("deposit");
   const [amount, setAmount]     = useState("");
   const [txHash, setTxHash]     = useState<`0x${string}` | undefined>();
+  const [error, setError]       = useState("");
+  const missing = missingAddressLabels(["nftRentalVault", "governanceToken", "equestria1155"]);
 
   const { writeContractAsync, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash: txHash });
 
   const { data, refetch } = useReadContracts({
-    contracts: address ? [
+    contracts: address && missing.length === 0 ? [
       { address: ADDRESSES.nftRentalVault,  abi: NFT_RENTAL_VAULT_ABI,  functionName: "totalAssets"  },
       { address: ADDRESSES.nftRentalVault,  abi: NFT_RENTAL_VAULT_ABI,  functionName: "totalSupply"  },
       { address: ADDRESSES.nftRentalVault,  abi: NFT_RENTAL_VAULT_ABI,  functionName: "boostBps"     },
@@ -38,6 +41,10 @@ export default function VaultPage() {
     ] : [],
   });
 
+  useEffect(() => {
+    if (isSuccess) refetch();
+  }, [isSuccess, refetch]);
+
   const [totalAssets, totalSupply, boostBps, boostedNftId, shares, isRenting,
          govBalance, govAllowance, pinkieBalance, nftApproved] = (data ?? []).map(d => d?.result);
 
@@ -48,6 +55,15 @@ export default function VaultPage() {
 
   async function handleDeposit() {
     if (!address) return;
+    if (missing.length > 0) {
+      setError(missingEnvMessage(missing));
+      return;
+    }
+    if ((govBalance as bigint ?? 0n) < amountBig) {
+      setError("Insufficient GOV balance for this deposit.");
+      return;
+    }
+    setError("");
     try {
       if (needsApproval) {
         const approveTx = await writeContractAsync({
@@ -57,6 +73,7 @@ export default function VaultPage() {
           args:         [ADDRESSES.nftRentalVault, maxUint256],
         });
         setTxHash(approveTx);
+        return;
       }
       const depositTx = await writeContractAsync({
         address:      ADDRESSES.nftRentalVault,
@@ -66,12 +83,14 @@ export default function VaultPage() {
       });
       setTxHash(depositTx);
       setAmount("");
-      refetch();
-    } catch {}
+    } catch (err) {
+      setError(friendlyError(err));
+    }
   }
 
   async function handleWithdraw() {
     if (!address || !shares) return;
+    setError("");
     try {
       const tx = await writeContractAsync({
         address:      ADDRESSES.nftRentalVault,
@@ -81,19 +100,32 @@ export default function VaultPage() {
       });
       setTxHash(tx);
       refetch();
-    } catch {}
+    } catch (err) {
+      setError(friendlyError(err));
+    }
   }
 
   async function handleStakeNFT() {
     if (!address) return;
+    if (missing.length > 0) {
+      setError(missingEnvMessage(missing));
+      return;
+    }
+    if ((pinkieBalance as bigint ?? 0n) < 1n) {
+      setError("You need a Pinkie Pie NFT before staking.");
+      return;
+    }
+    setError("");
     try {
       if (nftNeedsApproval) {
-        await writeContractAsync({
+        const approvalTx = await writeContractAsync({
           address:      ADDRESSES.equestria1155,
           abi:          EQUESTRIA_1155_ABI,
           functionName: "setApprovalForAll",
           args:         [ADDRESSES.nftRentalVault, true],
         });
+        setTxHash(approvalTx);
+        return;
       }
       const tx = await writeContractAsync({
         address:      ADDRESSES.nftRentalVault,
@@ -102,12 +134,14 @@ export default function VaultPage() {
         args:         [boostedNftId as bigint ?? TOKEN_IDS.PINKIE_PIE],
       });
       setTxHash(tx);
-      refetch();
-    } catch {}
+    } catch (err) {
+      setError(friendlyError(err));
+    }
   }
 
   async function handleUnstakeNFT() {
     if (!address) return;
+    setError("");
     try {
       const tx = await writeContractAsync({
         address:      ADDRESSES.nftRentalVault,
@@ -117,7 +151,9 @@ export default function VaultPage() {
       });
       setTxHash(tx);
       refetch();
-    } catch {}
+    } catch (err) {
+      setError(friendlyError(err));
+    }
   }
 
   const loading = isPending || isConfirming;
@@ -126,6 +162,8 @@ export default function VaultPage() {
     <ConnectGuard>
       <main className="max-w-3xl mx-auto px-4 py-8 flex flex-col gap-6 animate-fade-in">
         <Section title="NFT Rental Vault" sub="ERC-4626 vault · stake a pony NFT for boosted yield">
+          {missing.length > 0 && <Notice tone="warning" message={missingEnvMessage(missing)} />}
+          {error && <Notice tone="error" message={error} />}
 
           {/* Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -180,7 +218,7 @@ export default function VaultPage() {
                   loading={loading}
                   disabled={(pinkieBalance as bigint ?? 0n) === 0n}
                 >
-                  {nftNeedsApproval ? "Approve & Stake" : "Stake NFT"}
+                  {nftNeedsApproval ? "Approve NFT" : "Stake NFT"}
                 </TxButton>
               )}
             </div>
@@ -213,11 +251,11 @@ export default function VaultPage() {
                 />
                 {isSuccess ? (
                   <div className="bg-green/10 border border-green/40 text-green text-sm font-mono rounded-lg p-3 text-center">
-                    ✓ Deposit successful!
+                    Transaction confirmed.
                   </div>
                 ) : (
                   <TxButton onClick={handleDeposit} loading={loading} disabled={!amount || amountBig === 0n}>
-                    {needsApproval ? "Approve & Deposit" : "Deposit"}
+                    {needsApproval ? "Approve GOV" : "Deposit"}
                   </TxButton>
                 )}
               </>
@@ -231,7 +269,7 @@ export default function VaultPage() {
                 </div>
                 {isSuccess ? (
                   <div className="bg-green/10 border border-green/40 text-green text-sm font-mono rounded-lg p-3 text-center">
-                    ✓ Withdrawal successful!
+                    Withdrawal successful.
                   </div>
                 ) : (
                   <TxButton

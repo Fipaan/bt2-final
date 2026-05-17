@@ -1,10 +1,10 @@
 "use client";
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
-import { arbitrumSepolia, baseSepolia, hardhat } from "wagmi/chains";
+import { arbitrumSepolia } from "wagmi/chains";
 
 export const wagmiConfig = getDefaultConfig({
-  appName:     "GameFi Economy",
-  projectId:   "YOUR_WALLETCONNECT_PROJECT_ID", // replace with real ID
-  chains:      [arbitrumSepolia, baseSepolia, hardhat],
-  ssr:         true,
+  appName: "GameFi Economy",
+  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "fallback",
+  chains: [arbitrumSepolia],
+  ssr: true,
 });

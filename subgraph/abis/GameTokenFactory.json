@@ -1,0 +1,12 @@
+[
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "token", "type": "address" },
+      { "indexed": true, "internalType": "bytes32", "name": "salt", "type": "bytes32" },
+      { "indexed": true, "internalType": "bool", "name": "create2", "type": "bool" }
+    ],
+    "name": "TokenCreated",
+    "type": "event"
+  }
+]

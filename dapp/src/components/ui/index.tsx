@@ -1,5 +1,6 @@
 "use client";
 import { cn } from "@/lib/utils";
+import { ARBITRUM_SEPOLIA_CHAIN_ID } from "@/lib/contracts";
 
 // ── StatCard ──────────────────────────────────────────────────────────────────
 export function StatCard({
@@ -88,6 +89,23 @@ export function EmptyState({ message }: { message: string }) {
   );
 }
 
+export function Notice({
+  message,
+  tone = "default",
+}: {
+  message: string;
+  tone?: "default" | "error" | "success" | "warning";
+}) {
+  const tones = {
+    default: "border-border text-subtext bg-surface",
+    error: "border-red/40 text-red bg-red/10",
+    success: "border-green/40 text-green bg-green/10",
+    warning: "border-orange/40 text-orange bg-orange/10",
+  };
+  if (!message) return null;
+  return <div className={cn("rounded-lg border p-3 text-sm font-mono", tones[tone])}>{message}</div>;
+}
+
 // ── Divider ───────────────────────────────────────────────────────────────────
 export function Divider() {
   return <div className="border-t border-border" />;
@@ -116,11 +134,13 @@ export function InputField({
 }
 
 // ── ConnectGuard ──────────────────────────────────────────────────────────────
-import { useAccount } from "wagmi";
+import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 export function ConnectGuard({ children }: { children: React.ReactNode }) {
   const { isConnected } = useAccount();
+  const chainId = useChainId();
+  const { switchChain, isPending } = useSwitchChain();
   if (!isConnected) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
@@ -131,6 +151,26 @@ export function ConnectGuard({ children }: { children: React.ReactNode }) {
         </div>
         <p className="text-subtext font-body text-sm">Connect your wallet to continue</p>
         <ConnectButton />
+      </div>
+    );
+  }
+  if (chainId !== ARBITRUM_SEPOLIA_CHAIN_ID) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-24">
+        <div className="card flex flex-col items-center gap-4 text-center">
+          <div>
+            <h2 className="font-display font-bold text-white text-lg">Wrong network</h2>
+            <p className="text-subtext text-sm mt-1">
+              This dApp is configured for Arbitrum Sepolia.
+            </p>
+          </div>
+          <TxButton
+            onClick={() => switchChain({ chainId: ARBITRUM_SEPOLIA_CHAIN_ID })}
+            loading={isPending}
+          >
+            Switch to Arbitrum Sepolia
+          </TxButton>
+        </div>
       </div>
     );
   }
