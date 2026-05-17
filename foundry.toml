@@ -7,7 +7,7 @@ libs   = ["lib"]
 via_ir = true
 
 optimizer = true
-optimizer_runs = 20
+optimizer_runs = 10
 
 ignored_error_codes = [
     5667
