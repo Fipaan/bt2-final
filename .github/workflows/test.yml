@@ -53,7 +53,7 @@ jobs:
       - run: solhint 'src/**/*.sol'
 
   prettier:
-    name: Prettier (frontend)
+    name: Prettier (dapp)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -65,7 +65,7 @@ jobs:
         with:
           node-version: 20
       - run: npm install -g prettier prettier-plugin-solidity
-      - run: prettier --check 'frontend/**/*.{js,html,css}'
+      - run: prettier --check 'dapp/**/*.{js,html,css,ts,tsx}'
 
   slither:
     name: Slither
