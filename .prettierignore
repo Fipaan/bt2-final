@@ -1,3 +1,4 @@
-frontend/node_modules
-frontend/dist
-frontend/build
+dapp/node_modules
+dapp/dist
+dapp/build
+dapp/.next
