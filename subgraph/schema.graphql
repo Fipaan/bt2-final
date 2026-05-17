@@ -1,4 +1,4 @@
-type Pool @entity {
+type Pool @entity(immutable: true) {
   id: ID!
   address: Bytes!
   reserveA: BigInt!
@@ -35,7 +35,7 @@ type SwapEvent @entity(immutable: true) {
   timestamp: BigInt!
 }
 
-type TokenBalance @entity {
+type TokenBalance @entity(immutable: true) {
   id: ID!
   owner: Bytes!
   tokenId: BigInt!
@@ -56,7 +56,7 @@ type NftTransfer @entity(immutable: true) {
   timestamp: BigInt!
 }
 
-type CraftRequest @entity {
+type CraftRequest @entity(immutable: true) {
   id: ID!
   requestId: BigInt!
   user: Bytes!
@@ -79,7 +79,7 @@ type CraftFulfillment @entity(immutable: true) {
   timestamp: BigInt!
 }
 
-type OperatorApproval @entity {
+type OperatorApproval @entity(immutable: true) {
   id: ID!
   owner: Bytes!
   operator: Bytes!
@@ -88,7 +88,7 @@ type OperatorApproval @entity {
   updatedAtBlock: BigInt!
 }
 
-type Rental @entity {
+type Rental @entity(immutable: true) {
   id: ID!
   renter: Bytes!
   nftId: BigInt!
@@ -99,7 +99,7 @@ type Rental @entity {
   unstakedTx: Bytes
 }
 
-type VaultStat @entity {
+type VaultStat @entity(immutable: true) {
   id: ID!
   activeRentalCount: BigInt!
   totalYieldInjected: BigInt!
@@ -135,7 +135,7 @@ type CreatedToken @entity(immutable: true) {
   timestamp: BigInt!
 }
 
-type RandomRequest @entity {
+type RandomRequest @entity(immutable: true) {
   id: ID!
   requestId: BigInt!
   sender: Bytes!

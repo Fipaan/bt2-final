@@ -8,7 +8,7 @@ dataSources:
     name: AMM
     network: arbitrum-sepolia
     source:
-      address: "0x0000000000000000000000000000000000000000"
+      address: "0xc1e094e1077F5c6F32e6909Ab06350522A9fd97f"
       abi: AMM
       startBlock: 0
     mapping:
@@ -34,7 +34,7 @@ dataSources:
     name: Equestria1155
     network: arbitrum-sepolia
     source:
-      address: "0x0000000000000000000000000000000000000000"
+      address: "0xCCd814f7ff92D676465dda56C0AE4864f969482A"
       abi: Equestria1155
       startBlock: 0
     mapping:
@@ -66,7 +66,7 @@ dataSources:
     name: NFTRentalVault
     network: arbitrum-sepolia
     source:
-      address: "0x0000000000000000000000000000000000000000"
+      address: "0x545ff10B317525444d0F6F7Fcd7aE1b247F8Ff97"
       abi: NFTRentalVault
       startBlock: 0
     mapping:
@@ -95,7 +95,7 @@ dataSources:
     name: GameTokenFactory
     network: arbitrum-sepolia
     source:
-      address: "0x0000000000000000000000000000000000000000"
+      address: "0xE87AB83509812C5b380F6C4d2F69f34CA73404aD"
       abi: GameTokenFactory
       startBlock: 0
     mapping:
@@ -115,7 +115,7 @@ dataSources:
     name: VRFConsumer
     network: arbitrum-sepolia
     source:
-      address: "0x0000000000000000000000000000000000000000"
+      address: "0x06daDF4b762b4fafDc39981f91D5a488CafC4b12"
       abi: VRFConsumer
       startBlock: 0
     mapping:
