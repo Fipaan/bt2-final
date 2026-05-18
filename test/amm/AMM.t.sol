@@ -65,7 +65,6 @@ contract AMMTest is Test {
     address bob = address(0xB0B);
 
     uint256 constant INITIAL = 1_000_000 ether;
-    bool constant TEST_INVARIANCE = true;
 
     function setUp() public {
         tokenA = new GameToken("Token A", "TKA", address(this));
@@ -88,11 +87,8 @@ contract AMMTest is Test {
         tokenB.approve(address(amm), type(uint256).max);
         vm.stopPrank();
 
-        // test only when needed (slow test)
-        if (TEST_INVARIANCE) {
-            handler = new AMMHandler(amm, tokenA, tokenB, address(this));
-            targetContract(address(handler));
-        }
+        handler = new AMMHandler(amm, tokenA, tokenB, address(this));
+        targetContract(address(handler));
     }
 
     // -- helpers ----------------------------------------------
@@ -397,5 +393,61 @@ contract AMMTest is Test {
         vm.stopPrank();
         assertLe(a, amount);
         assertLe(b, amount);
+    }
+
+    function test_lpToken_transfer() public {
+        uint256 lpAmt = _addLiquidity(alice, 1000 ether, 1000 ether);
+        vm.prank(alice);
+        lp.transfer(bob, lpAmt / 2);
+        assertEq(lp.balanceOf(bob), lpAmt / 2);
+        assertEq(lp.balanceOf(alice), lpAmt - lpAmt / 2);
+    }
+
+    function test_lpToken_transferFrom() public {
+        uint256 lpAmt = _addLiquidity(alice, 1000 ether, 1000 ether);
+        vm.prank(alice);
+        lp.approve(address(this), lpAmt);
+        lp.transferFrom(alice, bob, lpAmt);
+        assertEq(lp.balanceOf(bob), lpAmt);
+    }
+
+    function test_lpToken_approve() public {
+        vm.prank(alice);
+        lp.approve(bob, 500 ether);
+        assertEq(lp.allowance(alice, bob), 500 ether);
+    }
+
+    function test_lpToken_transferFrom_reducesAllowance() public {
+        uint256 lpAmt = _addLiquidity(alice, 1000 ether, 1000 ether);
+        vm.prank(alice);
+        lp.approve(bob, lpAmt);
+        vm.prank(bob);
+        lp.transferFrom(alice, bob, lpAmt / 2);
+        assertEq(lp.allowance(alice, bob), lpAmt / 2);
+    }
+
+    function test_lpToken_transferFrom_maxAllowanceNotReduced() public {
+        uint256 lpAmt = _addLiquidity(alice, 1000 ether, 1000 ether);
+        vm.prank(alice);
+        lp.approve(bob, type(uint256).max);
+        vm.prank(bob);
+        lp.transferFrom(alice, bob, lpAmt);
+        assertEq(lp.allowance(alice, bob), type(uint256).max);
+    }
+
+    function test_lpToken_transfer_revertsInsufficientBalance() public {
+        vm.expectRevert(LPToken.InsufficientBalance.selector);
+        vm.prank(alice);
+        lp.transfer(bob, 1);
+    }
+
+    function test_lpToken_transferFrom_revertsInsufficientAllowance() public {
+        _addLiquidity(alice, 1000 ether, 1000 ether);
+        vm.expectRevert(LPToken.NotAllowed.selector);
+        lp.transferFrom(alice, bob, 1);
+    }
+
+    function test_lpToken_decimals() public view {
+        assertEq(lp.DECIMALS(), 18);
     }
 }

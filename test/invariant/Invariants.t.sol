@@ -58,8 +58,9 @@ contract TreasuryHandler is Test {
 
     function deposit(uint256 amount) public {
         amount = bound(amount, 0, 100 ether);
-        vm.deal(address(treasury), address(treasury).balance + amount);
-        totalDeposited += amount;
+        vm.deal(address(this), amount);
+        (bool ok,) = address(treasury).call{value: amount}("");
+        if (ok) totalDeposited += amount;
     }
 
     function withdraw(uint256 amount) public {

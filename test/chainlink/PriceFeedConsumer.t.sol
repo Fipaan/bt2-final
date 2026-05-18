@@ -64,4 +64,17 @@ contract PriceFeedConsumerTest is Test {
         vm.expectRevert(PriceFeedConsumer.StalePrice.selector);
         consumer.getLatestPrice();
     }
+
+    function test_mockAggregator_getRoundData() public view {
+        (, int256 price,,,) = feed.getRoundData(1);
+        assertEq(price, 2000e8);
+    }
+
+    function test_mockAggregator_description() public view {
+        assertEq(keccak256(bytes(feed.description())), keccak256(bytes("Mock")));
+    }
+
+    function test_mockAggregator_version() public view {
+        assertEq(feed.version(), 1);
+    }
 }
