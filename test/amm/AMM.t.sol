@@ -297,6 +297,14 @@ contract AMMTest is Test {
 
     // -- getAmountOut ------------------------------------------
 
+    function test_benchmark_getAmountOut_solidity() public view {
+        amm.getAmountOut(1000 ether, 100_000 ether, 100_000 ether);
+    }
+
+    function test_benchmark_getAmountOut_yul() public view {
+        amm.getAmountOutYul(1000 ether, 100_000 ether, 100_000 ether);
+    }
+
     function test_getAmountOut_basic() public view {
         uint256 out = amm.getAmountOut(1000 ether, 100_000 ether, 100_000 ether);
         assertGt(out, 0);
