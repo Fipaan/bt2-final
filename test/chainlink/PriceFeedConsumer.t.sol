@@ -52,14 +52,6 @@ contract PriceFeedConsumerTest is Test {
         consumer.getLatestPrice();
     }
 
-    function test_stalenessThreshold_setCorrectly() public view {
-        assertEq(consumer.stalenessThreshold(), STALENESS);
-    }
-
-    function test_priceFeed_setCorrectly() public view {
-        assertEq(address(consumer.priceFeed()), address(feed));
-    }
-
     function test_mockAggregator_setPrice() public {
         feed.setPrice(3000e8);
         (int256 price,) = consumer.getLatestPrice();

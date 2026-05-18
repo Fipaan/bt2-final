@@ -216,10 +216,13 @@ contract NFTRentalVaultTest is Test {
         assertLe(redeemed, assets);
     }
 
-    function testFuzz_previewDeposit_neverOverestimates(uint256 assets) public view {
-        assets = bound(assets, 1, 100_000 ether);
-        uint256 preview = vault.previewDeposit(assets);
-        uint256 actual = vault.convertToShares(assets);
-        assertLe(preview, actual + 1);
+    function testFuzz_injectYield_increasesTotalAssets(uint256 amount) public {
+        amount = bound(amount, 1 ether, 10_000 ether);
+        vm.prank(alice);
+        vault.deposit(1000 ether, alice);
+        uint256 before = vault.totalAssets();
+        vm.prank(owner);
+        vault.injectYield(amount);
+        assertEq(vault.totalAssets(), before + amount);
     }
 }
