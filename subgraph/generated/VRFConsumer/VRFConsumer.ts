@@ -10,24 +10,64 @@ import {
   BigInt,
 } from "@graphprotocol/graph-ts";
 
-export class RandomRequested extends ethereum.Event {
-  get params(): RandomRequested__Params {
-    return new RandomRequested__Params(this);
+export class CoordinatorSet extends ethereum.Event {
+  get params(): CoordinatorSet__Params {
+    return new CoordinatorSet__Params(this);
   }
 }
 
-export class RandomRequested__Params {
-  _event: RandomRequested;
+export class CoordinatorSet__Params {
+  _event: CoordinatorSet;
 
-  constructor(event: RandomRequested) {
+  constructor(event: CoordinatorSet) {
     this._event = event;
   }
 
-  get requestId(): BigInt {
-    return this._event.parameters[0].value.toBigInt();
+  get vrfCoordinator(): Address {
+    return this._event.parameters[0].value.toAddress();
+  }
+}
+
+export class OwnershipTransferRequested extends ethereum.Event {
+  get params(): OwnershipTransferRequested__Params {
+    return new OwnershipTransferRequested__Params(this);
+  }
+}
+
+export class OwnershipTransferRequested__Params {
+  _event: OwnershipTransferRequested;
+
+  constructor(event: OwnershipTransferRequested) {
+    this._event = event;
   }
 
-  get sender(): Address {
+  get from(): Address {
+    return this._event.parameters[0].value.toAddress();
+  }
+
+  get to(): Address {
+    return this._event.parameters[1].value.toAddress();
+  }
+}
+
+export class OwnershipTransferred extends ethereum.Event {
+  get params(): OwnershipTransferred__Params {
+    return new OwnershipTransferred__Params(this);
+  }
+}
+
+export class OwnershipTransferred__Params {
+  _event: OwnershipTransferred;
+
+  constructor(event: OwnershipTransferred) {
+    this._event = event;
+  }
+
+  get from(): Address {
+    return this._event.parameters[0].value.toAddress();
+  }
+
+  get to(): Address {
     return this._event.parameters[1].value.toAddress();
   }
 }
@@ -54,8 +94,416 @@ export class RandomFulfilled__Params {
   }
 }
 
+export class RandomRequested extends ethereum.Event {
+  get params(): RandomRequested__Params {
+    return new RandomRequested__Params(this);
+  }
+}
+
+export class RandomRequested__Params {
+  _event: RandomRequested;
+
+  constructor(event: RandomRequested) {
+    this._event = event;
+  }
+
+  get requestId(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+
+  get sender(): Address {
+    return this._event.parameters[1].value.toAddress();
+  }
+}
+
 export class VRFConsumer extends ethereum.SmartContract {
   static bind(address: Address): VRFConsumer {
     return new VRFConsumer("VRFConsumer", address);
+  }
+
+  CALLBACK_GAS_LIMIT(): BigInt {
+    let result = super.call(
+      "CALLBACK_GAS_LIMIT",
+      "CALLBACK_GAS_LIMIT():(uint32)",
+      [],
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_CALLBACK_GAS_LIMIT(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      "CALLBACK_GAS_LIMIT",
+      "CALLBACK_GAS_LIMIT():(uint32)",
+      [],
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  NUM_WORDS(): BigInt {
+    let result = super.call("NUM_WORDS", "NUM_WORDS():(uint32)", []);
+
+    return result[0].toBigInt();
+  }
+
+  try_NUM_WORDS(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall("NUM_WORDS", "NUM_WORDS():(uint32)", []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  REQUEST_CONFIRMATIONS(): i32 {
+    let result = super.call(
+      "REQUEST_CONFIRMATIONS",
+      "REQUEST_CONFIRMATIONS():(uint16)",
+      [],
+    );
+
+    return result[0].toI32();
+  }
+
+  try_REQUEST_CONFIRMATIONS(): ethereum.CallResult<i32> {
+    let result = super.tryCall(
+      "REQUEST_CONFIRMATIONS",
+      "REQUEST_CONFIRMATIONS():(uint16)",
+      [],
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toI32());
+  }
+
+  keyHash(): Bytes {
+    let result = super.call("keyHash", "keyHash():(bytes32)", []);
+
+    return result[0].toBytes();
+  }
+
+  try_keyHash(): ethereum.CallResult<Bytes> {
+    let result = super.tryCall("keyHash", "keyHash():(bytes32)", []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBytes());
+  }
+
+  lastRandomResult(param0: Address): BigInt {
+    let result = super.call(
+      "lastRandomResult",
+      "lastRandomResult(address):(uint256)",
+      [ethereum.Value.fromAddress(param0)],
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_lastRandomResult(param0: Address): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      "lastRandomResult",
+      "lastRandomResult(address):(uint256)",
+      [ethereum.Value.fromAddress(param0)],
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  owner(): Address {
+    let result = super.call("owner", "owner():(address)", []);
+
+    return result[0].toAddress();
+  }
+
+  try_owner(): ethereum.CallResult<Address> {
+    let result = super.tryCall("owner", "owner():(address)", []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+
+  requestRandom(): BigInt {
+    let result = super.call("requestRandom", "requestRandom():(uint256)", []);
+
+    return result[0].toBigInt();
+  }
+
+  try_requestRandom(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      "requestRandom",
+      "requestRandom():(uint256)",
+      [],
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  requestToSender(param0: BigInt): Address {
+    let result = super.call(
+      "requestToSender",
+      "requestToSender(uint256):(address)",
+      [ethereum.Value.fromUnsignedBigInt(param0)],
+    );
+
+    return result[0].toAddress();
+  }
+
+  try_requestToSender(param0: BigInt): ethereum.CallResult<Address> {
+    let result = super.tryCall(
+      "requestToSender",
+      "requestToSender(uint256):(address)",
+      [ethereum.Value.fromUnsignedBigInt(param0)],
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+
+  s_vrfCoordinator(): Address {
+    let result = super.call(
+      "s_vrfCoordinator",
+      "s_vrfCoordinator():(address)",
+      [],
+    );
+
+    return result[0].toAddress();
+  }
+
+  try_s_vrfCoordinator(): ethereum.CallResult<Address> {
+    let result = super.tryCall(
+      "s_vrfCoordinator",
+      "s_vrfCoordinator():(address)",
+      [],
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+
+  subscriptionId(): BigInt {
+    let result = super.call("subscriptionId", "subscriptionId():(uint256)", []);
+
+    return result[0].toBigInt();
+  }
+
+  try_subscriptionId(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      "subscriptionId",
+      "subscriptionId():(uint256)",
+      [],
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+}
+
+export class ConstructorCall extends ethereum.Call {
+  get inputs(): ConstructorCall__Inputs {
+    return new ConstructorCall__Inputs(this);
+  }
+
+  get outputs(): ConstructorCall__Outputs {
+    return new ConstructorCall__Outputs(this);
+  }
+}
+
+export class ConstructorCall__Inputs {
+  _call: ConstructorCall;
+
+  constructor(call: ConstructorCall) {
+    this._call = call;
+  }
+
+  get coordinator_(): Address {
+    return this._call.inputValues[0].value.toAddress();
+  }
+
+  get keyHash_(): Bytes {
+    return this._call.inputValues[1].value.toBytes();
+  }
+
+  get subscriptionId_(): BigInt {
+    return this._call.inputValues[2].value.toBigInt();
+  }
+}
+
+export class ConstructorCall__Outputs {
+  _call: ConstructorCall;
+
+  constructor(call: ConstructorCall) {
+    this._call = call;
+  }
+}
+
+export class AcceptOwnershipCall extends ethereum.Call {
+  get inputs(): AcceptOwnershipCall__Inputs {
+    return new AcceptOwnershipCall__Inputs(this);
+  }
+
+  get outputs(): AcceptOwnershipCall__Outputs {
+    return new AcceptOwnershipCall__Outputs(this);
+  }
+}
+
+export class AcceptOwnershipCall__Inputs {
+  _call: AcceptOwnershipCall;
+
+  constructor(call: AcceptOwnershipCall) {
+    this._call = call;
+  }
+}
+
+export class AcceptOwnershipCall__Outputs {
+  _call: AcceptOwnershipCall;
+
+  constructor(call: AcceptOwnershipCall) {
+    this._call = call;
+  }
+}
+
+export class RawFulfillRandomWordsCall extends ethereum.Call {
+  get inputs(): RawFulfillRandomWordsCall__Inputs {
+    return new RawFulfillRandomWordsCall__Inputs(this);
+  }
+
+  get outputs(): RawFulfillRandomWordsCall__Outputs {
+    return new RawFulfillRandomWordsCall__Outputs(this);
+  }
+}
+
+export class RawFulfillRandomWordsCall__Inputs {
+  _call: RawFulfillRandomWordsCall;
+
+  constructor(call: RawFulfillRandomWordsCall) {
+    this._call = call;
+  }
+
+  get requestId(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+
+  get randomWords(): Array<BigInt> {
+    return this._call.inputValues[1].value.toBigIntArray();
+  }
+}
+
+export class RawFulfillRandomWordsCall__Outputs {
+  _call: RawFulfillRandomWordsCall;
+
+  constructor(call: RawFulfillRandomWordsCall) {
+    this._call = call;
+  }
+}
+
+export class RequestRandomCall extends ethereum.Call {
+  get inputs(): RequestRandomCall__Inputs {
+    return new RequestRandomCall__Inputs(this);
+  }
+
+  get outputs(): RequestRandomCall__Outputs {
+    return new RequestRandomCall__Outputs(this);
+  }
+}
+
+export class RequestRandomCall__Inputs {
+  _call: RequestRandomCall;
+
+  constructor(call: RequestRandomCall) {
+    this._call = call;
+  }
+}
+
+export class RequestRandomCall__Outputs {
+  _call: RequestRandomCall;
+
+  constructor(call: RequestRandomCall) {
+    this._call = call;
+  }
+
+  get requestId(): BigInt {
+    return this._call.outputValues[0].value.toBigInt();
+  }
+}
+
+export class SetCoordinatorCall extends ethereum.Call {
+  get inputs(): SetCoordinatorCall__Inputs {
+    return new SetCoordinatorCall__Inputs(this);
+  }
+
+  get outputs(): SetCoordinatorCall__Outputs {
+    return new SetCoordinatorCall__Outputs(this);
+  }
+}
+
+export class SetCoordinatorCall__Inputs {
+  _call: SetCoordinatorCall;
+
+  constructor(call: SetCoordinatorCall) {
+    this._call = call;
+  }
+
+  get _vrfCoordinator(): Address {
+    return this._call.inputValues[0].value.toAddress();
+  }
+}
+
+export class SetCoordinatorCall__Outputs {
+  _call: SetCoordinatorCall;
+
+  constructor(call: SetCoordinatorCall) {
+    this._call = call;
+  }
+}
+
+export class TransferOwnershipCall extends ethereum.Call {
+  get inputs(): TransferOwnershipCall__Inputs {
+    return new TransferOwnershipCall__Inputs(this);
+  }
+
+  get outputs(): TransferOwnershipCall__Outputs {
+    return new TransferOwnershipCall__Outputs(this);
+  }
+}
+
+export class TransferOwnershipCall__Inputs {
+  _call: TransferOwnershipCall;
+
+  constructor(call: TransferOwnershipCall) {
+    this._call = call;
+  }
+
+  get to(): Address {
+    return this._call.inputValues[0].value.toAddress();
+  }
+}
+
+export class TransferOwnershipCall__Outputs {
+  _call: TransferOwnershipCall;
+
+  constructor(call: TransferOwnershipCall) {
+    this._call = call;
   }
 }

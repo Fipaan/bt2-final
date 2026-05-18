@@ -97,9 +97,9 @@ export function handleTransferBatch(event: TransferBatch): void {
 }
 
 export function handleApprovalForAll(event: ApprovalForAll): void {
-  let id = event.params.owner.toHexString() + "-" + event.params.operator.toHexString();
+  let id = event.params.account.toHexString() + "-" + event.params.operator.toHexString();
   let approval = new OperatorApproval(id);
-  approval.owner = event.params.owner;
+  approval.owner = event.params.account;
   approval.operator = event.params.operator;
   approval.approved = event.params.approved;
   approval.updatedAt = event.block.timestamp;

@@ -69,7 +69,7 @@ export async function fetchIndexedProposals(): Promise<IndexedProposal[]> {
       }
     }
   `);
-    return data.proposals;
+    return data?.proposals ?? [];
 }
 
 export async function fetchRecentActivity(): Promise<{

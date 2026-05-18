@@ -58,6 +58,14 @@ export default function DAOPage() {
         { hash: txHash },
     );
     const missing = missingAddressLabels(["governanceToken", "myGovernor"]);
+    const [showPropose, setShowPropose] = useState(false);
+    const [propTarget, setPropTarget] = useState("");
+    const [propCalldata, setPropCalldata] = useState("");
+    const [propDescription, setPropDescription] = useState("");
+    const [propError, setPropError] = useState("");
+    const [propTxHash, setPropTxHash] = useState<`0x${string}` | undefined>();
+    const { isSuccess: propIsSuccess } = useWaitForTransactionReceipt({ hash: propTxHash });
+    const [refreshing, setRefreshing] = useState(false);
 
     useEffect(() => {
         let cancelled = false;
@@ -186,6 +194,41 @@ export default function DAOPage() {
         }
     }
 
+    async function handlePropose() {
+        if (!address) return;
+        setPropError("");
+        try {
+            const tx = await writeContractAsync({
+                address: ADDRESSES.myGovernor,
+                abi: GOVERNOR_ABI,
+                functionName: "propose",
+                args: [
+                    [propTarget as `0x${string}`],
+                    [0n],
+                    [propCalldata as `0x${string}`],
+                    propDescription,
+                ],
+            });
+            setPropTxHash(tx);
+            setShowPropose(false);
+        } catch (err) {
+            setPropError(friendlyError(err));
+        }
+    }
+
+    async function refreshProposals() {
+        setRefreshing(true);
+        try {
+            const next = await fetchIndexedProposals();
+            setProposals(next);
+            setProposalError("");
+        } catch (err) {
+            setProposalError(friendlyError(err));
+        } finally {
+            setRefreshing(false);
+        }
+    }
+
     return (
         <ConnectGuard>
             <main className="max-w-4xl mx-auto px-4 py-8 flex flex-col gap-6 animate-fade-in">
@@ -193,6 +236,13 @@ export default function DAOPage() {
                     title="DAO Governance"
                     sub="Indexed proposals · live Governor state · wallet voting"
                 >
+                    <button
+                        onClick={refreshProposals}
+                        disabled={refreshing}
+                        className="text-xs font-mono px-3 py-1.5 rounded-lg border border-border text-subtext hover:text-text transition-colors"
+                    >
+                        {refreshing ? "Refreshing..." : "↻ Refresh"}
+                    </button>
                     {missing.length > 0 && (
                         <Notice
                             tone="warning"
@@ -275,6 +325,57 @@ export default function DAOPage() {
                             </TxButton>
                         </div>
                     )}
+                    <div className="card flex flex-col gap-3">
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-display text-sm font-semibold text-text">Create Proposal</h3>
+                            <button
+                                onClick={() => setShowPropose(!showPropose)}
+                                className="text-xs font-mono px-3 py-1.5 rounded-lg border border-border text-subtext hover:text-text transition-colors"
+                            >
+                                {showPropose ? "Cancel" : "+ New Proposal"}
+                            </button>
+                        </div>
+                        {showPropose && (
+                            <div className="flex flex-col gap-3">
+                                {propError && <Notice tone="error" message={propError} />}
+                                {propIsSuccess && <Notice tone="success" message="Proposal submitted." />}
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-xs font-mono text-subtext">Target Address</label>
+                                    <input
+                                        value={propTarget}
+                                        onChange={e => setPropTarget(e.target.value)}
+                                        placeholder="0x..."
+                                        className="bg-surface2 border border-border rounded-lg px-3 py-2 text-sm font-mono text-text placeholder-subtext focus:outline-none focus:border-accent/40"
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-xs font-mono text-subtext">Calldata (hex)</label>
+                                    <input
+                                        value={propCalldata}
+                                        onChange={e => setPropCalldata(e.target.value)}
+                                        placeholder="0x..."
+                                        className="bg-surface2 border border-border rounded-lg px-3 py-2 text-sm font-mono text-text placeholder-subtext focus:outline-none focus:border-accent/40"
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-xs font-mono text-subtext">Description</label>
+                                    <input
+                                        value={propDescription}
+                                        onChange={e => setPropDescription(e.target.value)}
+                                        placeholder="Proposal description..."
+                                        className="bg-surface2 border border-border rounded-lg px-3 py-2 text-sm font-mono text-text placeholder-subtext focus:outline-none focus:border-accent/40"
+                                    />
+                                </div>
+                                <TxButton
+                                    onClick={handlePropose}
+                                    loading={loading}
+                                    disabled={!propTarget || !propDescription || !isSelfDelegated}
+                                >
+                                    {!isSelfDelegated ? "Delegate first" : "Submit Proposal"}
+                                </TxButton>
+                            </div>
+                        )}
+                    </div>
 
                     <div className="flex flex-col gap-3">
                         {proposals.length === 0 && !proposalError && (

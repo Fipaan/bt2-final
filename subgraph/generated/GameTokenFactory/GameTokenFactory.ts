@@ -40,4 +40,219 @@ export class GameTokenFactory extends ethereum.SmartContract {
   static bind(address: Address): GameTokenFactory {
     return new GameTokenFactory("GameTokenFactory", address);
   }
+
+  allTokens(param0: BigInt): Address {
+    let result = super.call("allTokens", "allTokens(uint256):(address)", [
+      ethereum.Value.fromUnsignedBigInt(param0),
+    ]);
+
+    return result[0].toAddress();
+  }
+
+  try_allTokens(param0: BigInt): ethereum.CallResult<Address> {
+    let result = super.tryCall("allTokens", "allTokens(uint256):(address)", [
+      ethereum.Value.fromUnsignedBigInt(param0),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+
+  allTokensLength(): BigInt {
+    let result = super.call(
+      "allTokensLength",
+      "allTokensLength():(uint256)",
+      [],
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_allTokensLength(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      "allTokensLength",
+      "allTokensLength():(uint256)",
+      [],
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  createToken(name: string, symbol: string): Address {
+    let result = super.call(
+      "createToken",
+      "createToken(string,string):(address)",
+      [ethereum.Value.fromString(name), ethereum.Value.fromString(symbol)],
+    );
+
+    return result[0].toAddress();
+  }
+
+  try_createToken(name: string, symbol: string): ethereum.CallResult<Address> {
+    let result = super.tryCall(
+      "createToken",
+      "createToken(string,string):(address)",
+      [ethereum.Value.fromString(name), ethereum.Value.fromString(symbol)],
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+
+  createToken2(name: string, symbol: string, salt: Bytes): Address {
+    let result = super.call(
+      "createToken2",
+      "createToken2(string,string,bytes32):(address)",
+      [
+        ethereum.Value.fromString(name),
+        ethereum.Value.fromString(symbol),
+        ethereum.Value.fromFixedBytes(salt),
+      ],
+    );
+
+    return result[0].toAddress();
+  }
+
+  try_createToken2(
+    name: string,
+    symbol: string,
+    salt: Bytes,
+  ): ethereum.CallResult<Address> {
+    let result = super.tryCall(
+      "createToken2",
+      "createToken2(string,string,bytes32):(address)",
+      [
+        ethereum.Value.fromString(name),
+        ethereum.Value.fromString(symbol),
+        ethereum.Value.fromFixedBytes(salt),
+      ],
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+
+  predictAddress(name: string, symbol: string, salt: Bytes): Address {
+    let result = super.call(
+      "predictAddress",
+      "predictAddress(string,string,bytes32):(address)",
+      [
+        ethereum.Value.fromString(name),
+        ethereum.Value.fromString(symbol),
+        ethereum.Value.fromFixedBytes(salt),
+      ],
+    );
+
+    return result[0].toAddress();
+  }
+
+  try_predictAddress(
+    name: string,
+    symbol: string,
+    salt: Bytes,
+  ): ethereum.CallResult<Address> {
+    let result = super.tryCall(
+      "predictAddress",
+      "predictAddress(string,string,bytes32):(address)",
+      [
+        ethereum.Value.fromString(name),
+        ethereum.Value.fromString(symbol),
+        ethereum.Value.fromFixedBytes(salt),
+      ],
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+}
+
+export class CreateTokenCall extends ethereum.Call {
+  get inputs(): CreateTokenCall__Inputs {
+    return new CreateTokenCall__Inputs(this);
+  }
+
+  get outputs(): CreateTokenCall__Outputs {
+    return new CreateTokenCall__Outputs(this);
+  }
+}
+
+export class CreateTokenCall__Inputs {
+  _call: CreateTokenCall;
+
+  constructor(call: CreateTokenCall) {
+    this._call = call;
+  }
+
+  get name(): string {
+    return this._call.inputValues[0].value.toString();
+  }
+
+  get symbol(): string {
+    return this._call.inputValues[1].value.toString();
+  }
+}
+
+export class CreateTokenCall__Outputs {
+  _call: CreateTokenCall;
+
+  constructor(call: CreateTokenCall) {
+    this._call = call;
+  }
+
+  get token(): Address {
+    return this._call.outputValues[0].value.toAddress();
+  }
+}
+
+export class CreateToken2Call extends ethereum.Call {
+  get inputs(): CreateToken2Call__Inputs {
+    return new CreateToken2Call__Inputs(this);
+  }
+
+  get outputs(): CreateToken2Call__Outputs {
+    return new CreateToken2Call__Outputs(this);
+  }
+}
+
+export class CreateToken2Call__Inputs {
+  _call: CreateToken2Call;
+
+  constructor(call: CreateToken2Call) {
+    this._call = call;
+  }
+
+  get name(): string {
+    return this._call.inputValues[0].value.toString();
+  }
+
+  get symbol(): string {
+    return this._call.inputValues[1].value.toString();
+  }
+
+  get salt(): Bytes {
+    return this._call.inputValues[2].value.toBytes();
+  }
+}
+
+export class CreateToken2Call__Outputs {
+  _call: CreateToken2Call;
+
+  constructor(call: CreateToken2Call) {
+    this._call = call;
+  }
+
+  get token(): Address {
+    return this._call.outputValues[0].value.toAddress();
+  }
 }

@@ -11,7 +11,7 @@ Equestria Protocol is a fully on-chain GameFi economy featuring:
 - Full DAO governance with OpenZeppelin Governor stack
 - UUPS upgradeable contracts via Factory pattern
 
-## Deployed Contracts (Arbitrum Sepolia) (NOTE: not defense ready)
+## Deployed Contracts (Arbitrum Sepolia)
 
 | Contract | Address |
 |----------|---------|
@@ -41,7 +41,7 @@ See [docs/architecture.md](docs/architecture.md) for full system design, C4 diag
 
 ## Security
 
-See [docs/audit.md](docs/audit.md) for the full internal security audit report including findings, centralization analysis, and governance attack analysis.
+See report for the full internal security audit report including findings, centralization analysis, and governance attack analysis.
 
 ## Getting Started
 

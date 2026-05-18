@@ -1,4 +1,4 @@
-type Pool @entity(immutable: true) {
+type Pool @entity {
   id: ID!
   address: Bytes!
   reserveA: BigInt!
@@ -147,4 +147,21 @@ type RandomRequest @entity(immutable: true) {
   fulfilledAt: BigInt
   requestedAtBlock: BigInt!
   fulfilledAtBlock: BigInt
+}
+
+type Proposal @entity {
+  id: ID!
+  proposalId: String!
+  proposer: Bytes!
+  description: String!
+  voteStart: BigInt!
+  voteEnd: BigInt!
+  canceled: Boolean!
+  queued: Boolean!
+  executed: Boolean!
+  forVotes: BigInt!
+  againstVotes: BigInt!
+  abstainVotes: BigInt!
+  voteCount: Int!
+  timestamp: BigInt!
 }

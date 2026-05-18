@@ -104,8 +104,560 @@ export class Swap__Params {
   }
 }
 
+export class AMM__addLiquidityResult {
+  value0: BigInt;
+  value1: BigInt;
+  value2: BigInt;
+
+  constructor(value0: BigInt, value1: BigInt, value2: BigInt) {
+    this.value0 = value0;
+    this.value1 = value1;
+    this.value2 = value2;
+  }
+
+  toMap(): TypedMap<string, ethereum.Value> {
+    let map = new TypedMap<string, ethereum.Value>();
+    map.set("value0", ethereum.Value.fromUnsignedBigInt(this.value0));
+    map.set("value1", ethereum.Value.fromUnsignedBigInt(this.value1));
+    map.set("value2", ethereum.Value.fromUnsignedBigInt(this.value2));
+    return map;
+  }
+
+  getAmountA(): BigInt {
+    return this.value0;
+  }
+
+  getAmountB(): BigInt {
+    return this.value1;
+  }
+
+  getLiquidity(): BigInt {
+    return this.value2;
+  }
+}
+
+export class AMM__removeLiquidityResult {
+  value0: BigInt;
+  value1: BigInt;
+
+  constructor(value0: BigInt, value1: BigInt) {
+    this.value0 = value0;
+    this.value1 = value1;
+  }
+
+  toMap(): TypedMap<string, ethereum.Value> {
+    let map = new TypedMap<string, ethereum.Value>();
+    map.set("value0", ethereum.Value.fromUnsignedBigInt(this.value0));
+    map.set("value1", ethereum.Value.fromUnsignedBigInt(this.value1));
+    return map;
+  }
+
+  getAmountA(): BigInt {
+    return this.value0;
+  }
+
+  getAmountB(): BigInt {
+    return this.value1;
+  }
+}
+
 export class AMM extends ethereum.SmartContract {
   static bind(address: Address): AMM {
     return new AMM("AMM", address);
+  }
+
+  addLiquidity(
+    amountADesired: BigInt,
+    amountBDesired: BigInt,
+    minAmountA: BigInt,
+    minAmountB: BigInt,
+  ): AMM__addLiquidityResult {
+    let result = super.call(
+      "addLiquidity",
+      "addLiquidity(uint256,uint256,uint256,uint256):(uint256,uint256,uint256)",
+      [
+        ethereum.Value.fromUnsignedBigInt(amountADesired),
+        ethereum.Value.fromUnsignedBigInt(amountBDesired),
+        ethereum.Value.fromUnsignedBigInt(minAmountA),
+        ethereum.Value.fromUnsignedBigInt(minAmountB),
+      ],
+    );
+
+    return new AMM__addLiquidityResult(
+      result[0].toBigInt(),
+      result[1].toBigInt(),
+      result[2].toBigInt(),
+    );
+  }
+
+  try_addLiquidity(
+    amountADesired: BigInt,
+    amountBDesired: BigInt,
+    minAmountA: BigInt,
+    minAmountB: BigInt,
+  ): ethereum.CallResult<AMM__addLiquidityResult> {
+    let result = super.tryCall(
+      "addLiquidity",
+      "addLiquidity(uint256,uint256,uint256,uint256):(uint256,uint256,uint256)",
+      [
+        ethereum.Value.fromUnsignedBigInt(amountADesired),
+        ethereum.Value.fromUnsignedBigInt(amountBDesired),
+        ethereum.Value.fromUnsignedBigInt(minAmountA),
+        ethereum.Value.fromUnsignedBigInt(minAmountB),
+      ],
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      new AMM__addLiquidityResult(
+        value[0].toBigInt(),
+        value[1].toBigInt(),
+        value[2].toBigInt(),
+      ),
+    );
+  }
+
+  getAmountOut(
+    amountIn: BigInt,
+    reserveIn: BigInt,
+    reserveOut: BigInt,
+  ): BigInt {
+    let result = super.call(
+      "getAmountOut",
+      "getAmountOut(uint256,uint256,uint256):(uint256)",
+      [
+        ethereum.Value.fromUnsignedBigInt(amountIn),
+        ethereum.Value.fromUnsignedBigInt(reserveIn),
+        ethereum.Value.fromUnsignedBigInt(reserveOut),
+      ],
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_getAmountOut(
+    amountIn: BigInt,
+    reserveIn: BigInt,
+    reserveOut: BigInt,
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      "getAmountOut",
+      "getAmountOut(uint256,uint256,uint256):(uint256)",
+      [
+        ethereum.Value.fromUnsignedBigInt(amountIn),
+        ethereum.Value.fromUnsignedBigInt(reserveIn),
+        ethereum.Value.fromUnsignedBigInt(reserveOut),
+      ],
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  getAmountOutYul(
+    amountIn: BigInt,
+    reserveIn: BigInt,
+    reserveOut: BigInt,
+  ): BigInt {
+    let result = super.call(
+      "getAmountOutYul",
+      "getAmountOutYul(uint256,uint256,uint256):(uint256)",
+      [
+        ethereum.Value.fromUnsignedBigInt(amountIn),
+        ethereum.Value.fromUnsignedBigInt(reserveIn),
+        ethereum.Value.fromUnsignedBigInt(reserveOut),
+      ],
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_getAmountOutYul(
+    amountIn: BigInt,
+    reserveIn: BigInt,
+    reserveOut: BigInt,
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      "getAmountOutYul",
+      "getAmountOutYul(uint256,uint256,uint256):(uint256)",
+      [
+        ethereum.Value.fromUnsignedBigInt(amountIn),
+        ethereum.Value.fromUnsignedBigInt(reserveIn),
+        ethereum.Value.fromUnsignedBigInt(reserveOut),
+      ],
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  lpToken(): Address {
+    let result = super.call("lpToken", "lpToken():(address)", []);
+
+    return result[0].toAddress();
+  }
+
+  try_lpToken(): ethereum.CallResult<Address> {
+    let result = super.tryCall("lpToken", "lpToken():(address)", []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+
+  quoteAForB(amountIn: BigInt): BigInt {
+    let result = super.call("quoteAForB", "quoteAForB(uint256):(uint256)", [
+      ethereum.Value.fromUnsignedBigInt(amountIn),
+    ]);
+
+    return result[0].toBigInt();
+  }
+
+  try_quoteAForB(amountIn: BigInt): ethereum.CallResult<BigInt> {
+    let result = super.tryCall("quoteAForB", "quoteAForB(uint256):(uint256)", [
+      ethereum.Value.fromUnsignedBigInt(amountIn),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  quoteBForA(amountIn: BigInt): BigInt {
+    let result = super.call("quoteBForA", "quoteBForA(uint256):(uint256)", [
+      ethereum.Value.fromUnsignedBigInt(amountIn),
+    ]);
+
+    return result[0].toBigInt();
+  }
+
+  try_quoteBForA(amountIn: BigInt): ethereum.CallResult<BigInt> {
+    let result = super.tryCall("quoteBForA", "quoteBForA(uint256):(uint256)", [
+      ethereum.Value.fromUnsignedBigInt(amountIn),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  removeLiquidity(
+    lpAmount: BigInt,
+    minAmountA: BigInt,
+    minAmountB: BigInt,
+  ): AMM__removeLiquidityResult {
+    let result = super.call(
+      "removeLiquidity",
+      "removeLiquidity(uint256,uint256,uint256):(uint256,uint256)",
+      [
+        ethereum.Value.fromUnsignedBigInt(lpAmount),
+        ethereum.Value.fromUnsignedBigInt(minAmountA),
+        ethereum.Value.fromUnsignedBigInt(minAmountB),
+      ],
+    );
+
+    return new AMM__removeLiquidityResult(
+      result[0].toBigInt(),
+      result[1].toBigInt(),
+    );
+  }
+
+  try_removeLiquidity(
+    lpAmount: BigInt,
+    minAmountA: BigInt,
+    minAmountB: BigInt,
+  ): ethereum.CallResult<AMM__removeLiquidityResult> {
+    let result = super.tryCall(
+      "removeLiquidity",
+      "removeLiquidity(uint256,uint256,uint256):(uint256,uint256)",
+      [
+        ethereum.Value.fromUnsignedBigInt(lpAmount),
+        ethereum.Value.fromUnsignedBigInt(minAmountA),
+        ethereum.Value.fromUnsignedBigInt(minAmountB),
+      ],
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      new AMM__removeLiquidityResult(value[0].toBigInt(), value[1].toBigInt()),
+    );
+  }
+
+  reserveA(): BigInt {
+    let result = super.call("reserveA", "reserveA():(uint256)", []);
+
+    return result[0].toBigInt();
+  }
+
+  try_reserveA(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall("reserveA", "reserveA():(uint256)", []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  reserveB(): BigInt {
+    let result = super.call("reserveB", "reserveB():(uint256)", []);
+
+    return result[0].toBigInt();
+  }
+
+  try_reserveB(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall("reserveB", "reserveB():(uint256)", []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  swap(tokenIn: Address, amountIn: BigInt, minAmountOut: BigInt): BigInt {
+    let result = super.call("swap", "swap(address,uint256,uint256):(uint256)", [
+      ethereum.Value.fromAddress(tokenIn),
+      ethereum.Value.fromUnsignedBigInt(amountIn),
+      ethereum.Value.fromUnsignedBigInt(minAmountOut),
+    ]);
+
+    return result[0].toBigInt();
+  }
+
+  try_swap(
+    tokenIn: Address,
+    amountIn: BigInt,
+    minAmountOut: BigInt,
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      "swap",
+      "swap(address,uint256,uint256):(uint256)",
+      [
+        ethereum.Value.fromAddress(tokenIn),
+        ethereum.Value.fromUnsignedBigInt(amountIn),
+        ethereum.Value.fromUnsignedBigInt(minAmountOut),
+      ],
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  tokenA(): Address {
+    let result = super.call("tokenA", "tokenA():(address)", []);
+
+    return result[0].toAddress();
+  }
+
+  try_tokenA(): ethereum.CallResult<Address> {
+    let result = super.tryCall("tokenA", "tokenA():(address)", []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+
+  tokenB(): Address {
+    let result = super.call("tokenB", "tokenB():(address)", []);
+
+    return result[0].toAddress();
+  }
+
+  try_tokenB(): ethereum.CallResult<Address> {
+    let result = super.tryCall("tokenB", "tokenB():(address)", []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+}
+
+export class ConstructorCall extends ethereum.Call {
+  get inputs(): ConstructorCall__Inputs {
+    return new ConstructorCall__Inputs(this);
+  }
+
+  get outputs(): ConstructorCall__Outputs {
+    return new ConstructorCall__Outputs(this);
+  }
+}
+
+export class ConstructorCall__Inputs {
+  _call: ConstructorCall;
+
+  constructor(call: ConstructorCall) {
+    this._call = call;
+  }
+
+  get tokenA_(): Address {
+    return this._call.inputValues[0].value.toAddress();
+  }
+
+  get tokenB_(): Address {
+    return this._call.inputValues[1].value.toAddress();
+  }
+}
+
+export class ConstructorCall__Outputs {
+  _call: ConstructorCall;
+
+  constructor(call: ConstructorCall) {
+    this._call = call;
+  }
+}
+
+export class AddLiquidityCall extends ethereum.Call {
+  get inputs(): AddLiquidityCall__Inputs {
+    return new AddLiquidityCall__Inputs(this);
+  }
+
+  get outputs(): AddLiquidityCall__Outputs {
+    return new AddLiquidityCall__Outputs(this);
+  }
+}
+
+export class AddLiquidityCall__Inputs {
+  _call: AddLiquidityCall;
+
+  constructor(call: AddLiquidityCall) {
+    this._call = call;
+  }
+
+  get amountADesired(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+
+  get amountBDesired(): BigInt {
+    return this._call.inputValues[1].value.toBigInt();
+  }
+
+  get minAmountA(): BigInt {
+    return this._call.inputValues[2].value.toBigInt();
+  }
+
+  get minAmountB(): BigInt {
+    return this._call.inputValues[3].value.toBigInt();
+  }
+}
+
+export class AddLiquidityCall__Outputs {
+  _call: AddLiquidityCall;
+
+  constructor(call: AddLiquidityCall) {
+    this._call = call;
+  }
+
+  get amountA(): BigInt {
+    return this._call.outputValues[0].value.toBigInt();
+  }
+
+  get amountB(): BigInt {
+    return this._call.outputValues[1].value.toBigInt();
+  }
+
+  get liquidity(): BigInt {
+    return this._call.outputValues[2].value.toBigInt();
+  }
+}
+
+export class RemoveLiquidityCall extends ethereum.Call {
+  get inputs(): RemoveLiquidityCall__Inputs {
+    return new RemoveLiquidityCall__Inputs(this);
+  }
+
+  get outputs(): RemoveLiquidityCall__Outputs {
+    return new RemoveLiquidityCall__Outputs(this);
+  }
+}
+
+export class RemoveLiquidityCall__Inputs {
+  _call: RemoveLiquidityCall;
+
+  constructor(call: RemoveLiquidityCall) {
+    this._call = call;
+  }
+
+  get lpAmount(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+
+  get minAmountA(): BigInt {
+    return this._call.inputValues[1].value.toBigInt();
+  }
+
+  get minAmountB(): BigInt {
+    return this._call.inputValues[2].value.toBigInt();
+  }
+}
+
+export class RemoveLiquidityCall__Outputs {
+  _call: RemoveLiquidityCall;
+
+  constructor(call: RemoveLiquidityCall) {
+    this._call = call;
+  }
+
+  get amountA(): BigInt {
+    return this._call.outputValues[0].value.toBigInt();
+  }
+
+  get amountB(): BigInt {
+    return this._call.outputValues[1].value.toBigInt();
+  }
+}
+
+export class SwapCall extends ethereum.Call {
+  get inputs(): SwapCall__Inputs {
+    return new SwapCall__Inputs(this);
+  }
+
+  get outputs(): SwapCall__Outputs {
+    return new SwapCall__Outputs(this);
+  }
+}
+
+export class SwapCall__Inputs {
+  _call: SwapCall;
+
+  constructor(call: SwapCall) {
+    this._call = call;
+  }
+
+  get tokenIn(): Address {
+    return this._call.inputValues[0].value.toAddress();
+  }
+
+  get amountIn(): BigInt {
+    return this._call.inputValues[1].value.toBigInt();
+  }
+
+  get minAmountOut(): BigInt {
+    return this._call.inputValues[2].value.toBigInt();
+  }
+}
+
+export class SwapCall__Outputs {
+  _call: SwapCall;
+
+  constructor(call: SwapCall) {
+    this._call = call;
+  }
+
+  get amountOut(): BigInt {
+    return this._call.outputValues[0].value.toBigInt();
   }
 }
