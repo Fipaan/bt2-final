@@ -99,4 +99,23 @@ contract GovernanceTokenTest is Test {
 
         assertLt(token.getVotes(voter), before);
     }
+
+    function testFuzz_transfer_conservesSupply(uint256 amount) public {
+        amount = bound(amount, 0, token.balanceOf(treasuryUser));
+        uint256 supplyBefore = token.totalSupply();
+        vm.prank(treasuryUser);
+        token.transfer(voter, amount);
+        assertEq(token.totalSupply(), supplyBefore);
+    }
+
+    function testFuzz_delegate_votingPowerMatchesBalance(uint256 amount) public {
+        uint256 available = token.balanceOf(treasuryUser);
+        amount = bound(amount, 1 ether, available);
+        vm.prank(treasuryUser);
+        token.transfer(voter, amount);
+        vm.prank(voter);
+        token.delegate(voter);
+        vm.roll(block.number + 1);
+        assertEq(token.getVotes(voter), token.balanceOf(voter));
+    }
 }

@@ -37,7 +37,7 @@ contract Deploy is Script {
     // Got from: https://docs.chain.link/data-feeds/price-feeds/addresses?network=arbitrum&page=1#arbitrum-sepolia
     address constant PRICE_FEED = 0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165;
 
-    // NOTE: shortened for testnet — use 2 days + 1 hours for production
+    // NOTE: shortened for testnet - use 2 days + 1 hours for production
     uint256 constant TIMELOCK_DELAY = 10 seconds;
     uint256 constant STALENESS = 10 minutes;
 

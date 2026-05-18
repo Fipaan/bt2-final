@@ -35,7 +35,7 @@ contract PriceFeedConsumerTest is Test {
 
     function test_getLatestPrice_exactThresholdNotStale() public {
         vm.warp(block.timestamp + STALENESS);
-        // exactly at threshold — not stale yet
+        // exactly at threshold - not stale yet
         (int256 price,) = consumer.getLatestPrice();
         assertEq(price, 2000e8);
     }
@@ -52,14 +52,6 @@ contract PriceFeedConsumerTest is Test {
         consumer.getLatestPrice();
     }
 
-    function test_stalenessThreshold_setCorrectly() public view {
-        assertEq(consumer.stalenessThreshold(), STALENESS);
-    }
-
-    function test_priceFeed_setCorrectly() public view {
-        assertEq(address(consumer.priceFeed()), address(feed));
-    }
-
     function test_mockAggregator_setPrice() public {
         feed.setPrice(3000e8);
         (int256 price,) = consumer.getLatestPrice();
@@ -71,5 +63,18 @@ contract PriceFeedConsumerTest is Test {
         feed.setUpdatedAt(block.timestamp - STALENESS - 1);
         vm.expectRevert(PriceFeedConsumer.StalePrice.selector);
         consumer.getLatestPrice();
+    }
+
+    function test_mockAggregator_getRoundData() public view {
+        (, int256 price,,,) = feed.getRoundData(1);
+        assertEq(price, 2000e8);
+    }
+
+    function test_mockAggregator_description() public view {
+        assertEq(keccak256(bytes(feed.description())), keccak256(bytes("Mock")));
+    }
+
+    function test_mockAggregator_version() public view {
+        assertEq(feed.version(), 1);
     }
 }

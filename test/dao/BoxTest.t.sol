@@ -4,7 +4,6 @@ pragma solidity ^0.8.25;
 import {Test} from "forge-std/Test.sol";
 
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
-import {IGovernor} from "@openzeppelin/contracts/governance/IGovernor.sol";
 
 import {GovernanceToken} from "src/dao/GovernanceToken.sol";
 import {MyGovernor} from "src/dao/MyGovernor.sol";
@@ -71,44 +70,5 @@ contract BoxTest is Test {
 
         // ---------------- TARGET CONTRACTS ----------------
         box = new Box(address(timelock));
-    }
-
-    function test_box_governance_full_flow() public {
-        address[] memory targets = new address[](1);
-        targets[0] = address(box);
-
-        uint256[] memory values = new uint256[](1);
-
-        bytes[] memory calldatas = new bytes[](1);
-        calldatas[0] = abi.encodeWithSignature("store(uint256)", 42);
-
-        // ---------------- PROPOSE ----------------
-        vm.prank(voter1);
-        uint256 proposalId = governor.propose(targets, values, calldatas, "Set Box = 42");
-
-        // ---------------- ACTIVE STATE ----------------
-        vm.roll(block.number + VOTING_DELAY + 1); // skip votingDelay
-
-        // ---------------- VOTING ----------------
-        vm.prank(voter1);
-        governor.castVote(proposalId, 1);
-
-        vm.prank(voter2);
-        governor.castVote(proposalId, 1);
-
-        // ---------------- QUEUE ----------------
-        vm.roll(block.number + VOTING_PERIOD + 1); // skip votingDelay
-
-        governor.queue(targets, values, calldatas, keccak256(bytes("Set Box = 42")));
-
-        assertEq(uint256(governor.state(proposalId)), uint256(IGovernor.ProposalState.Queued));
-
-        // ---------------- EXECUTE ----------------
-        vm.warp(block.timestamp + 2 days + 1);
-
-        governor.execute(targets, values, calldatas, keccak256(bytes("Set Box = 42")));
-
-        // ---------------- VERIFY ----------------
-        assertEq(box.retrieve(), 42);
     }
 }

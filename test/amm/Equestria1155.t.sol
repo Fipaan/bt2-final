@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import {Test} from "forge-std/Test.sol";
+import {Test, console} from "forge-std/Test.sol";
 
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
@@ -241,5 +241,34 @@ contract Equestria1155Test is Test {
         if (b < 10) return bytes1(uint8(b + 48));
         // forge-lint: disable-next-line(unsafe-typecast)
         return bytes1(uint8(b + 87));
+    }
+
+    function testSetRecipe_onlyGovernor() public {
+        uint256 ponyId = token.PINKIE_PIE();
+        Equestria1155.Recipe memory newRecipe =
+            Equestria1155.Recipe({honesty: 10, kindness: 10, laughter: 10, generosity: 10, loyalty: 10, magic: 10});
+        vm.expectRevert(Equestria1155.NotGovernor.selector);
+        vm.prank(alice);
+        token.setRecipe(ponyId, newRecipe);
+    }
+
+    function testSetRecipe_governorCanUpdate() public {
+        address gov = address(0xDAA);
+        token.setGovernor(gov);
+
+        uint256 ponyId = token.PINKIE_PIE();
+        Equestria1155.Recipe memory newRecipe =
+            Equestria1155.Recipe({honesty: 1, kindness: 1, laughter: 1, generosity: 1, loyalty: 1, magic: 1});
+        vm.prank(gov);
+        token.setRecipe(ponyId, newRecipe);
+
+        (uint256 h,,,,,) = token.recipes(ponyId);
+        assertEq(h, 1);
+    }
+
+    function testSetGovernor_onlyOwner() public {
+        vm.expectRevert();
+        vm.prank(alice);
+        token.setGovernor(alice);
     }
 }
