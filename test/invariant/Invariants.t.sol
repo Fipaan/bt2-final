@@ -14,6 +14,37 @@ import {GovernanceToken} from "src/dao/GovernanceToken.sol";
 import {Treasury} from "src/dao/Treasury.sol";
 import {AMMHandler} from "test/amm/AMM.t.sol";
 
+contract VaultHandler is Test {
+    NFTRentalVault vault;
+    GovernanceToken token;
+    address user = address(0xBEEF);
+
+    constructor(NFTRentalVault _vault, GovernanceToken _token, address owner) {
+        vault = _vault;
+        token = _token;
+
+        vm.prank(owner);
+        IERC20(address(token)).transfer(user, 500_000 ether);
+
+        vm.prank(user);
+        IERC20(address(token)).approve(address(vault), type(uint256).max);
+    }
+
+    function deposit(uint256 assets) public {
+        assets = bound(assets, 1e6, 100_000 ether);
+        if (IERC20(address(token)).balanceOf(user) < assets) return;
+        vm.prank(user);
+        vault.deposit(assets, user);
+    }
+
+    function redeem(uint256 shares) public {
+        shares = bound(shares, 0, vault.balanceOf(user));
+        if (shares == 0) return;
+        vm.prank(user);
+        vault.redeem(shares, user, user);
+    }
+}
+
 contract InvariantTests is Test {
     AMM amm;
     GameToken tokenA;
@@ -23,6 +54,7 @@ contract InvariantTests is Test {
     GovernanceToken govToken;
     NFTRentalVault vault;
     Treasury treasury;
+    VaultHandler vaultHandler;
 
     address owner = address(0x0999);
 
@@ -41,6 +73,9 @@ contract InvariantTests is Test {
 
         // treasury
         treasury = new Treasury(owner);
+
+        vaultHandler = new VaultHandler(vault, govToken, owner);
+        targetContract(address(vaultHandler));
     }
 
     // 1. k never decreases on swap
@@ -69,5 +104,22 @@ contract InvariantTests is Test {
     // 5. treasury ETH balance never negative (trivially true but documents the invariant)
     function invariant_treasury_balanceNonNegative() public view {
         assertGe(address(treasury).balance, 0);
+    }
+
+    // 6. totalAssets should alwaus equal to govToken's balance of it.
+    function invariant_vault_totalAssetsMatchesBalance() public view {
+        assertEq(vault.totalAssets(), IERC20(address(govToken)).balanceOf(address(vault)));
+    }
+
+    // 7. totalSupply should alwaus be positive
+    function invariant_vault_totalSupplyNonNegative() public view {
+        assertGe(vault.totalSupply(), 0);
+    }
+
+    // 8. shares * price per share <= total assets
+    function invariant_vault_redeemNeverExceedsDeposit() public view {
+        if (vault.totalSupply() == 0) return;
+        uint256 pricePerShare = vault.convertToAssets(1e18);
+        assertGe(vault.totalAssets() * 1e18, vault.totalSupply() * pricePerShare - 1e18);
     }
 }
