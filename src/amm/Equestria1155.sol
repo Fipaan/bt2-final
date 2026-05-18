@@ -40,6 +40,8 @@ contract Equestria1155 is IERC1155, ReentrancyGuard, VRFConsumerBaseV2Plus {
     uint256 public immutable subscriptionId;
     uint16 public constant REQUEST_CONFIRMATIONS = 3;
     uint32 public constant CALLBACK_GAS_LIMIT = 200_000;
+    address public gameGovernor;
+    uint256 public dropBoostBps = 10;
 
     mapping(uint256 => address) public pendingCraftUser;
     mapping(uint256 => uint256) public pendingCraftPonyId;
@@ -47,8 +49,12 @@ contract Equestria1155 is IERC1155, ReentrancyGuard, VRFConsumerBaseV2Plus {
     event CraftRequested(uint256 indexed requestId, address indexed user, uint256 indexed ponyId);
     event CraftFulfilled(uint256 indexed requestId, address indexed user, uint256 indexed ponyId);
 
+    event NewGovernor(address indexed governor);
+    event NewDropBoostBps(uint256 indexed dropBoostBps);
+
     error NotOwner();
     error NotApproved();
+    error NotGovernor();
     error InsufficientBalance();
     error SmartContractNotAccepted();
     error SelfApproval();
@@ -126,6 +132,30 @@ contract Equestria1155 is IERC1155, ReentrancyGuard, VRFConsumerBaseV2Plus {
         return bytes1(uint8(b + 87));
     }
 
+    modifier onlyGovernor() {
+        if (msg.sender != gameGovernor) revert NotGovernor();
+        _;
+    }
+
+    // SLITHER-NOTE:
+    //     staright up not true. nonZeroAddress verifies that
+    //     gameGovernor_ is not empty
+    // slither-disable-next-line missing-zero-check
+    function setGovernor(address gameGovernor_) external onlyOwner nonZeroAddress(gameGovernor_) {
+        gameGovernor = gameGovernor_;
+        emit NewGovernor(gameGovernor);
+    }
+
+    function setRecipe(uint256 ponyId, Recipe calldata recipe) external onlyGovernor {
+        recipes[ponyId] = recipe;
+    }
+
+    function setDropBoostBps(uint256 newBps) external onlyGovernor {
+        // store and use in fulfillRandomWords for double drop threshold
+        dropBoostBps = newBps;
+        emit NewDropBoostBps(dropBoostBps);
+    }
+
     function craft(uint256 ponyId) external nonReentrant returns (uint256 requestId) {
         Recipe memory r = recipes[ponyId];
         if (r.honesty + r.kindness + r.laughter + r.generosity + r.loyalty + r.magic == 0) revert InvalidRecipe();
@@ -175,8 +205,8 @@ contract Equestria1155 is IERC1155, ReentrancyGuard, VRFConsumerBaseV2Plus {
         delete pendingCraftUser[requestId];
         delete pendingCraftPonyId[requestId];
 
-        // 10% chance of double drop
-        uint256 amount = (randomWords[0] % 100 < 10) ? 2 : 1;
+        // dropBoostBps% chance of double drop
+        uint256 amount = (randomWords[0] % 100 < dropBoostBps) ? 2 : 1;
         _mint(user, ponyId, amount, "");
 
         emit CraftFulfilled(requestId, user, ponyId);

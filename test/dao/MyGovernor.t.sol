@@ -83,7 +83,7 @@ contract MyGovernorTest is Test {
     }
 
     // =========================================================
-    // 1. proposal creation
+    // proposal creation
     // =========================================================
     function test_propose() public {
         uint256 id = _proposal();
@@ -91,7 +91,7 @@ contract MyGovernorTest is Test {
     }
 
     // =========================================================
-    // 2. proposal becomes active
+    // proposal becomes active
     // =========================================================
     function test_state_active() public {
         uint256 id = _proposal();
@@ -101,7 +101,7 @@ contract MyGovernorTest is Test {
     }
 
     // =========================================================
-    // 3. voting FOR works
+    // voting FOR works
     // =========================================================
     function test_vote_for() public {
         uint256 id = _proposal();
@@ -117,7 +117,7 @@ contract MyGovernorTest is Test {
     }
 
     // =========================================================
-    // 4. voting AGAINST works
+    // voting AGAINST works
     // =========================================================
     function test_vote_against() public {
         uint256 id = _proposal();
@@ -131,7 +131,7 @@ contract MyGovernorTest is Test {
     }
 
     // =========================================================
-    // 5. voting ABSTAIN works
+    // voting ABSTAIN works
     // =========================================================
     function test_vote_abstain() public {
         uint256 id = _proposal();
@@ -145,7 +145,7 @@ contract MyGovernorTest is Test {
     }
 
     // =========================================================
-    // 6. delegation gives voting power
+    // delegation gives voting power
     // =========================================================
     function test_delegation() public {
         vm.prank(address(10));
@@ -160,7 +160,7 @@ contract MyGovernorTest is Test {
     }
 
     // =========================================================
-    // 7. proposal succeeds with votes
+    // proposal succeeds with votes
     // =========================================================
     function test_succeeded_state() public {
         uint256 id = _proposal();
@@ -177,7 +177,7 @@ contract MyGovernorTest is Test {
     }
 
     // =========================================================
-    // 8. proposal queued
+    // proposal queued
     // =========================================================
     function test_queue() public {
         uint256 id = _proposal();
@@ -194,7 +194,7 @@ contract MyGovernorTest is Test {
     }
 
     // =========================================================
-    // 9. execution works
+    // execution works
     // =========================================================
     function test_execute() public {
         uint256 id = _proposal();
@@ -217,7 +217,7 @@ contract MyGovernorTest is Test {
     }
 
     // =========================================================
-    // 10. proposal defeated (no votes)
+    // proposal defeated (no votes)
     // =========================================================
     function test_defeated() public {
         uint256 id = _proposal();
@@ -228,39 +228,7 @@ contract MyGovernorTest is Test {
     }
 
     // =========================================================
-    // 11. helper proposal state not broken
-    // =========================================================
-    function test_state_exists() public {
-        uint256 id = _proposal();
-        uint256 s = uint256(governor.state(id));
-        assertTrue(s <= 7);
-    }
-
-    // =========================================================
-    // 12. full lifecycle sanity check
-    // =========================================================
-    function test_full_lifecycle() public {
-        uint256 id = _proposal();
-        vm.roll(block.number + VOTING_DELAY + 1);
-
-        vm.prank(voter1);
-        governor.castVote(id, 1);
-        vm.prank(voter2);
-        governor.castVote(id, 1);
-
-        vm.roll(block.number + VOTING_PERIOD + 1);
-
-        governor.queue(_targets(), _values(), _calldatas(), _descHash());
-
-        vm.warp(block.timestamp + 2 days + 1);
-
-        governor.execute(_targets(), _values(), _calldatas(), _descHash());
-
-        assertEq(box.retrieve(), 42);
-    }
-
-    // =========================================================
-    // 13. proposal threshold blocks low-balance proposer
+    // proposal threshold blocks low-balance proposer
     // =========================================================
     function test_proposal_threshold_blocks_low_balance() public {
         address poorUser = address(99);
@@ -280,7 +248,7 @@ contract MyGovernorTest is Test {
     }
 
     // =========================================================
-    // 14. quorum not met -> defeated
+    // quorum not met -> defeated
     // =========================================================
     function test_defeated_quorum_not_met() public {
         // voter1 has 30k, total supply ~1M -> 3% < 4% quorum

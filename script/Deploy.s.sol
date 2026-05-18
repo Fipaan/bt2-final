@@ -45,7 +45,7 @@ contract Deploy is Script {
     // // Got from: https://docs.chain.link/data-feeds/price-feeds/addresses
     // address constant PRICE_FEED = 0x4aDC67696bA383F43DD60A9e78F2C97Fbbfc7cb1;
 
-    // NOTE: shortened for testnet — use 2 days + 1 hours for production
+    // NOTE: shortened for testnet - use 2 days + 1 hours for production
     uint256 constant TIMELOCK_DELAY = 10 seconds;
     uint256 constant STALENESS = 10 minutes;
 
