@@ -64,7 +64,9 @@ export default function DAOPage() {
     const [propDescription, setPropDescription] = useState("");
     const [propError, setPropError] = useState("");
     const [propTxHash, setPropTxHash] = useState<`0x${string}` | undefined>();
-    const { isSuccess: propIsSuccess } = useWaitForTransactionReceipt({ hash: propTxHash });
+    const { isSuccess: propIsSuccess } = useWaitForTransactionReceipt({
+        hash: propTxHash,
+    });
     const [refreshing, setRefreshing] = useState(false);
 
     useEffect(() => {
@@ -327,7 +329,9 @@ export default function DAOPage() {
                     )}
                     <div className="card flex flex-col gap-3">
                         <div className="flex items-center justify-between">
-                            <h3 className="font-display text-sm font-semibold text-text">Create Proposal</h3>
+                            <h3 className="font-display text-sm font-semibold text-text">
+                                Create Proposal
+                            </h3>
                             <button
                                 onClick={() => setShowPropose(!showPropose)}
                                 className="text-xs font-mono px-3 py-1.5 rounded-lg border border-border text-subtext hover:text-text transition-colors"
@@ -337,31 +341,53 @@ export default function DAOPage() {
                         </div>
                         {showPropose && (
                             <div className="flex flex-col gap-3">
-                                {propError && <Notice tone="error" message={propError} />}
-                                {propIsSuccess && <Notice tone="success" message="Proposal submitted." />}
+                                {propError && (
+                                    <Notice
+                                        tone="error"
+                                        message={propError}
+                                    />
+                                )}
+                                {propIsSuccess && (
+                                    <Notice
+                                        tone="success"
+                                        message="Proposal submitted."
+                                    />
+                                )}
                                 <div className="flex flex-col gap-1">
-                                    <label className="text-xs font-mono text-subtext">Target Address</label>
+                                    <label className="text-xs font-mono text-subtext">
+                                        Target Address
+                                    </label>
                                     <input
                                         value={propTarget}
-                                        onChange={e => setPropTarget(e.target.value)}
+                                        onChange={(e) =>
+                                            setPropTarget(e.target.value)
+                                        }
                                         placeholder="0x..."
                                         className="bg-surface2 border border-border rounded-lg px-3 py-2 text-sm font-mono text-text placeholder-subtext focus:outline-none focus:border-accent/40"
                                     />
                                 </div>
                                 <div className="flex flex-col gap-1">
-                                    <label className="text-xs font-mono text-subtext">Calldata (hex)</label>
+                                    <label className="text-xs font-mono text-subtext">
+                                        Calldata (hex)
+                                    </label>
                                     <input
                                         value={propCalldata}
-                                        onChange={e => setPropCalldata(e.target.value)}
+                                        onChange={(e) =>
+                                            setPropCalldata(e.target.value)
+                                        }
                                         placeholder="0x..."
                                         className="bg-surface2 border border-border rounded-lg px-3 py-2 text-sm font-mono text-text placeholder-subtext focus:outline-none focus:border-accent/40"
                                     />
                                 </div>
                                 <div className="flex flex-col gap-1">
-                                    <label className="text-xs font-mono text-subtext">Description</label>
+                                    <label className="text-xs font-mono text-subtext">
+                                        Description
+                                    </label>
                                     <input
                                         value={propDescription}
-                                        onChange={e => setPropDescription(e.target.value)}
+                                        onChange={(e) =>
+                                            setPropDescription(e.target.value)
+                                        }
                                         placeholder="Proposal description..."
                                         className="bg-surface2 border border-border rounded-lg px-3 py-2 text-sm font-mono text-text placeholder-subtext focus:outline-none focus:border-accent/40"
                                     />
@@ -369,9 +395,15 @@ export default function DAOPage() {
                                 <TxButton
                                     onClick={handlePropose}
                                     loading={loading}
-                                    disabled={!propTarget || !propDescription || !isSelfDelegated}
+                                    disabled={
+                                        !propTarget ||
+                                        !propDescription ||
+                                        !isSelfDelegated
+                                    }
                                 >
-                                    {!isSelfDelegated ? "Delegate first" : "Submit Proposal"}
+                                    {!isSelfDelegated
+                                        ? "Delegate first"
+                                        : "Submit Proposal"}
                                 </TxButton>
                             </div>
                         )}
