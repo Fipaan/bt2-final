@@ -4,26 +4,26 @@ pragma solidity ^0.8.25;
 import {Script, console} from "forge-std/Script.sol";
 
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
-import {IGovernor}          from "@openzeppelin/contracts/governance/IGovernor.sol";
+import {IGovernor} from "@openzeppelin/contracts/governance/IGovernor.sol";
 
-import {MyGovernor}      from "src/dao/MyGovernor.sol";
-import {Treasury}        from "src/dao/Treasury.sol";
-import {Box}             from "src/dao/Box.sol";
-import {GameTokenV1}     from "src/factory/GameTokenV1.sol";
+import {MyGovernor} from "src/dao/MyGovernor.sol";
+import {Treasury} from "src/dao/Treasury.sol";
+import {Box} from "src/dao/Box.sol";
+import {GameTokenV1} from "src/factory/GameTokenV1.sol";
 
 contract Verify is Script {
     function run() external view {
-        address timelockAddr  = vm.envAddress("TIMELOCK_ADDR");
-        address governorAddr  = vm.envAddress("GOVERNOR_ADDR");
-        address treasuryAddr  = vm.envAddress("TREASURY_ADDR");
-        address boxAddr       = vm.envAddress("BOX_ADDR");
-        address proxyAddr     = vm.envAddress("PROXY_ADDR");
+        address timelockAddr = vm.envAddress("TIMELOCK_ADDR");
+        address governorAddr = vm.envAddress("GOVERNOR_ADDR");
+        address treasuryAddr = vm.envAddress("TREASURY_ADDR");
+        address boxAddr = vm.envAddress("BOX_ADDR");
+        address proxyAddr = vm.envAddress("PROXY_ADDR");
 
         TimelockController timelock = TimelockController(payable(timelockAddr));
-        MyGovernor         governor = MyGovernor(payable(governorAddr));
-        Treasury           treasury = Treasury(payable(treasuryAddr));
-        Box                box      = Box(boxAddr);
-        GameTokenV1        proxy    = GameTokenV1(proxyAddr);
+        MyGovernor governor = MyGovernor(payable(governorAddr));
+        Treasury treasury = Treasury(payable(treasuryAddr));
+        Box box = Box(boxAddr);
+        GameTokenV1 proxy = GameTokenV1(proxyAddr);
 
         bool ok = true;
 
