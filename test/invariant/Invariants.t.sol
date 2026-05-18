@@ -45,6 +45,34 @@ contract VaultHandler is Test {
     }
 }
 
+contract TreasuryHandler is Test {
+    Treasury treasury;
+    address timelockAddr;
+    uint256 public totalDeposited;
+    uint256 public totalWithdrawn;
+
+    constructor(Treasury _treasury, address _timelock) {
+        treasury = _treasury;
+        timelockAddr = _timelock;
+    }
+
+    function deposit(uint256 amount) public {
+        amount = bound(amount, 0, 100 ether);
+        vm.deal(address(treasury), address(treasury).balance + amount);
+        totalDeposited += amount;
+    }
+
+    function withdraw(uint256 amount) public {
+        amount = bound(amount, 0, address(treasury).balance);
+        if (amount == 0) return;
+        vm.prank(timelockAddr);
+        treasury.withdrawETH(payable(address(this)), amount);
+        totalWithdrawn += amount;
+    }
+
+    receive() external payable {}
+}
+
 contract InvariantTests is Test {
     AMM amm;
     GameToken tokenA;
@@ -54,6 +82,7 @@ contract InvariantTests is Test {
     GovernanceToken govToken;
     NFTRentalVault vault;
     Treasury treasury;
+    TreasuryHandler treasuryHandler;
     VaultHandler vaultHandler;
 
     address owner = address(0x0999);
@@ -73,6 +102,8 @@ contract InvariantTests is Test {
 
         // treasury
         treasury = new Treasury(owner);
+        treasuryHandler = new TreasuryHandler(treasury, owner);
+        targetContract(address(treasuryHandler));
 
         vaultHandler = new VaultHandler(vault, govToken, owner);
         targetContract(address(vaultHandler));
@@ -121,5 +152,11 @@ contract InvariantTests is Test {
         if (vault.totalSupply() == 0) return;
         uint256 pricePerShare = vault.convertToAssets(1e18);
         assertGe(vault.totalAssets() * 1e18, vault.totalSupply() * pricePerShare - 1e18);
+    }
+
+    // 9. Treasury accounting invariant: ETH balance must always equal
+    //    total deposited minus total withdrawn - no funds appear or vanish.
+    function invariant_treasury_balanceEqualsDepositedMinusWithdrawn() public view {
+        assertEq(address(treasury).balance, treasuryHandler.totalDeposited() - treasuryHandler.totalWithdrawn());
     }
 }

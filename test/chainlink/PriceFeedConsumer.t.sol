@@ -35,7 +35,7 @@ contract PriceFeedConsumerTest is Test {
 
     function test_getLatestPrice_exactThresholdNotStale() public {
         vm.warp(block.timestamp + STALENESS);
-        // exactly at threshold — not stale yet
+        // exactly at threshold - not stale yet
         (int256 price,) = consumer.getLatestPrice();
         assertEq(price, 2000e8);
     }
